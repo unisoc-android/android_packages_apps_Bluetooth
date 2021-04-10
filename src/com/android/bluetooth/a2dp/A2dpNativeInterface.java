@@ -173,6 +173,7 @@ public class A2dpNativeInterface {
         if (DBG) {
             Log.d(TAG, "onConnectionStateChanged: " + event);
         }
+            Log.d(TAG, "binzadd :onConnectionStateChanged: " + event);
         sendMessageToService(event);
     }
 

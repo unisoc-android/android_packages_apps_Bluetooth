@@ -23,6 +23,7 @@ import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothUuid;
 import android.bluetooth.SdpPseRecord;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -52,6 +53,8 @@ class PbapClientConnectionHandler extends Handler {
     static final int MSG_CONNECT = 1;
     static final int MSG_DISCONNECT = 2;
     static final int MSG_DOWNLOAD = 3;
+    static final String ACTION_DOWNLOAD_COMPLETE = "action.download.complete";
+    static final String ACTION_DOWNLOAD_EXCEPTION = "action.download.exception";
 
     // The following constants are pulled from the Bluetooth Phone Book Access Profile specification
     // 1.1
@@ -95,6 +98,7 @@ class PbapClientConnectionHandler extends Handler {
     private static final int L2CAP_INVALID_PSM = -1;
 
     public static final String PB_PATH = "telecom/pb.vcf";
+    public static final String PB_SIM_PATH = "SIM1/telecom/pb.vcf";
     public static final String MCH_PATH = "telecom/mch.vcf";
     public static final String ICH_PATH = "telecom/ich.vcf";
     public static final String OCH_PATH = "telecom/och.vcf";
@@ -116,6 +120,7 @@ class PbapClientConnectionHandler extends Handler {
     private final PbapClientStateMachine mPbapClientStateMachine;
     private boolean mAccountCreated;
 
+    private boolean mConnectState = false;
     PbapClientConnectionHandler(Looper looper, Context context, PbapClientStateMachine stateMachine,
             BluetoothDevice device) {
         super(looper);
@@ -190,11 +195,13 @@ class PbapClientConnectionHandler extends Handler {
                 mPseRec = (SdpPseRecord) msg.obj;
                 /* To establish a connection, first open a socket and then create an OBEX session */
                 if (connectSocket()) {
+                    mConnectState = true;
                     if (DBG) {
                         Log.d(TAG, "Socket connected");
                     }
                 } else {
                     Log.w(TAG, "Socket CONNECT Failure ");
+                    mConnectState = false;
                     mPbapClientStateMachine.sendMessage(
                             PbapClientStateMachine.MSG_CONNECTION_FAILED);
                     return;
@@ -233,35 +240,38 @@ class PbapClientConnectionHandler extends Handler {
                     Log.d(TAG, "Completing Disconnect");
                 }
                 removeAccount(mAccount);
-                removeCallLog(mAccount);
+                if (mConnectState) {
+                    removeCallLog(mAccount);
+                }
 
                 mPbapClientStateMachine.sendMessage(PbapClientStateMachine.MSG_CONNECTION_CLOSED);
+                mConnectState = false;
                 break;
 
             case MSG_DOWNLOAD:
-                try {
-                    mAccountCreated = addAccount(mAccount);
-                    if (!mAccountCreated) {
-                        Log.e(TAG, "Account creation failed.");
-                        return;
-                    }
-                    // Start at contact 1 to exclued Owner Card PBAP 1.1 sec 3.1.5.2
-                    BluetoothPbapRequestPullPhoneBook request =
-                            new BluetoothPbapRequestPullPhoneBook(PB_PATH, mAccount,
-                                    PBAP_REQUESTED_FIELDS, VCARD_TYPE_30, 0, 1);
-                    request.execute(mObexSession);
-                    PhonebookPullRequest processor =
-                            new PhonebookPullRequest(mPbapClientStateMachine.getContext(),
-                                    mAccount);
-                    processor.setResults(request.getList());
-                    processor.onPullComplete();
-                    HashMap<String, Integer> callCounter = new HashMap<>();
-                    downloadCallLog(MCH_PATH, callCounter);
-                    downloadCallLog(ICH_PATH, callCounter);
-                    downloadCallLog(OCH_PATH, callCounter);
-                } catch (IOException e) {
-                    Log.w(TAG, "DOWNLOAD_CONTACTS Failure" + e.toString());
+                // the vcard info stores in the db connect to mAccount, and
+                // the info won't be deleted. When we download the vcard info
+                // secoud time, there are 2 items with the same info if we
+                // don't remove the Account.
+                removeAccount(mAccount);
+                removeCallLog(mAccount);
+
+                downloadPhoneBook(PB_PATH);
+                Log.w(TAG, "Download PhoneBook from "+ PB_PATH+"end");
+                downloadPhoneBook(PB_SIM_PATH);
+                Log.w(TAG, "Download PhoneBook from "+ PB_SIM_PATH+"end");
+
+                HashMap<String, Integer> callCounter = new HashMap<>();
+                downloadCallLog(MCH_PATH, callCounter);
+                downloadCallLog(ICH_PATH, callCounter);
+                downloadCallLog(OCH_PATH, callCounter);
+
+                mAccountCreated = addAccount(mAccount);
+                if (mAccountCreated == false) {
+                    Log.e(TAG, "Account creation failed.");
+                    return;
                 }
+                mContext.sendBroadcast(new Intent(ACTION_DOWNLOAD_COMPLETE));
                 break;
 
             default:
@@ -364,6 +374,23 @@ class PbapClientConnectionHandler extends Handler {
             Log.e(TAG, "Error when closing socket", e);
             mSocket = null;
         }
+    }
+
+    void downloadPhoneBook(String path) {
+        try {
+            BluetoothPbapRequestPullPhoneBook request =
+                    new BluetoothPbapRequestPullPhoneBook(path, mAccount, 
+                            PBAP_REQUESTED_FIELDS, VCARD_TYPE_30, 0, 1);
+            request.execute(mObexSession);
+            PhonebookPullRequest processor =
+                    new PhonebookPullRequest(mPbapClientStateMachine.getContext(),
+                            path, mAccount);
+            processor.setResults(request.getList());
+            processor.onPullComplete();
+        } catch (IOException e) {
+            Log.w(TAG, "Download PhoneBook from "+ path+" failure");
+        }
+
     }
 
     void downloadCallLog(String path, HashMap<String, Integer> callCounter) {

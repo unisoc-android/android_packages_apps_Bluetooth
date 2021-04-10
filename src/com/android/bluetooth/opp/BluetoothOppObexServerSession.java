@@ -96,6 +96,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
 
     private BluetoothOppReceiveFileInfo mFileInfo;
 
+    private WakeLock mWakeLock;
     private WakeLock mPartialWakeLock;
 
     boolean mTimeoutMsgSent = false;
@@ -104,6 +105,8 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
 
     private int mNumFilesAttemptedToReceive;
 
+    private static final int BT_OPP_RECEIVE = 2;
+
     public BluetoothOppObexServerSession(Context context, ObexTransport transport,
             BluetoothOppService service) {
         mContext = context;
@@ -111,6 +114,9 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
         mBluetoothOppService = service;
         PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
         mPartialWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+        //SPRD :Add for make sure that scree on when receive a incoming file request
+        mWakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                | PowerManager.ON_AFTER_RELEASE, TAG);
         mPartialWakeLock.setReferenceCounted(false);
     }
 
@@ -200,6 +206,9 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
         }
         boolean isWhitelisted =
                 BluetoothOppManager.getInstance(mContext).isWhitelisted(destination);
+        if (D) {
+            Log.d(TAG, "destination = " + destination + ", isWhitelisted = " + isWhitelisted);
+        }
 
         HeaderSet request;
         String name, mimeType;
@@ -212,6 +221,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
             name = (String) request.getHeader(HeaderSet.NAME);
             length = (Long) request.getHeader(HeaderSet.LENGTH);
             mimeType = (String) request.getHeader(HeaderSet.TYPE);
+            Log.d(TAG, "name = " + name + ", mimeType = " + mimeType + ", length = " + length);
         } catch (IOException e) {
             Log.e(TAG, "onPut: getReceivedHeaders error " + e);
             return ResponseCodes.OBEX_HTTP_BAD_REQUEST;
@@ -243,7 +253,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
             extension = name.substring(dotIndex + 1).toLowerCase();
             MimeTypeMap map = MimeTypeMap.getSingleton();
             type = map.getMimeTypeFromExtension(extension);
-            if (V) {
+            if (D) {
                 Log.v(TAG, "Mimetype guessed from extension " + extension + " is " + type);
             }
             if (type != null) {
@@ -275,21 +285,28 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
         values.put(BluetoothShare.DESTINATION, destination);
         values.put(BluetoothShare.DIRECTION, BluetoothShare.DIRECTION_INBOUND);
         values.put(BluetoothShare.TIMESTAMP, mTimestamp);
+        boolean needConfirm = true;
 
         // It's not first put if !serverBlocking, so we auto accept it
         if (!mServerBlocking && (mAccepted == BluetoothShare.USER_CONFIRMATION_CONFIRMED
                 || mAccepted == BluetoothShare.USER_CONFIRMATION_AUTO_CONFIRMED)) {
             values.put(BluetoothShare.USER_CONFIRMATION,
                     BluetoothShare.USER_CONFIRMATION_AUTO_CONFIRMED);
+            needConfirm = false;
         }
 
         if (isWhitelisted) {
             values.put(BluetoothShare.USER_CONFIRMATION,
                     BluetoothShare.USER_CONFIRMATION_HANDOVER_CONFIRMED);
+            needConfirm = false;
         }
 
         Uri contentUri = mContext.getContentResolver().insert(BluetoothShare.CONTENT_URI, values);
         mLocalShareInfoId = Integer.parseInt(contentUri.getPathSegments().get(1));
+        if (needConfirm) {
+            Log.d(TAG, "acquire full WakeLock");
+            mWakeLock.acquire();
+        }
 
         if (V) {
             Log.v(TAG, "insert contentUri: " + contentUri);
@@ -298,6 +315,9 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
 
         synchronized (this) {
             mPartialWakeLock.acquire();
+            if (mWakeLock.isHeld()) {
+                mWakeLock.release();
+            }
             mServerBlocking = true;
             try {
 
@@ -465,6 +485,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
             long timestamp = 0;
             long currentTime;
             long prevTimestamp = SystemClock.elapsedRealtime();
+            BluetoothOppUtility.setLocalProfileState(mInfo.mDestination, BT_OPP_RECEIVE, true);
             try {
                 while ((!mInterrupted) && (position != fileInfo.mLength)) {
 
@@ -472,8 +493,15 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
                         timestamp = SystemClock.elapsedRealtime();
                     }
 
+                    // UNISOC: Bug#1072400 Add for Bluetooth Opp auto disconnect
+                    // when OBEX request or response timeout Feature BEG
+                    BluetoothOppUtility.startDisconnectTimer(mCallback, mInfo);
+
                     readLength = is.read(b);
 
+                    // UNISOC: Bug#1072400 Add for Bluetooth Opp auto disconnect
+                    // when OBEX request or response timeout Feature
+                    BluetoothOppUtility.stopDisconnectTimer(mCallback);
                     if (readLength == -1) {
                         if (D) {
                             Log.d(TAG, "Receive file reached stream end at position" + position);
@@ -514,6 +542,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
                 error = true;
             }
         }
+        BluetoothOppUtility.setLocalProfileState(mInfo.mDestination, BT_OPP_RECEIVE, false);
 
         if (mInterrupted) {
             if (D) {
@@ -553,7 +582,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
         }
         BluetoothOppReceiveFileInfo fileInfo =
                 BluetoothOppReceiveFileInfo.generateFileInfo(mContext, mInfo.mId);
-        if (V) {
+        if (D) {
             Log.v(TAG, "Generate BluetoothOppReceiveFileInfo:");
             Log.v(TAG, "filename  :" + fileInfo.mFileName);
             Log.v(TAG, "length    :" + fileInfo.mLength);
@@ -623,6 +652,9 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler
     }
 
     private synchronized void releaseWakeLocks() {
+        if (mWakeLock.isHeld()) {
+            mWakeLock.release();
+        }
         if (mPartialWakeLock.isHeld()) {
             mPartialWakeLock.release();
         }

@@ -80,6 +80,8 @@ public class BluetoothOppObexClientSession implements BluetoothOppObexSession {
 
     private int mNumFilesAttemptedToSend;
 
+    private static final int BT_OPP_SEND = 1;
+
     public BluetoothOppObexClientSession(Context context, ObexTransport transport) {
         if (transport == null) {
             throw new NullPointerException("transport is null");
@@ -356,7 +358,7 @@ public class BluetoothOppObexClientSession implements BluetoothOppObexSession {
                 Constants.updateShareStatus(mContext1, mInfo.mId, fileInfo.mStatus);
 
             } else {
-                if (V) {
+                if (D) {
                     Log.v(TAG, "Generate BluetoothOppSendFileInfo:");
                     Log.v(TAG, "filename  :" + fileInfo.mFileName);
                     Log.v(TAG, "length    :" + fileInfo.mLength);
@@ -395,6 +397,7 @@ public class BluetoothOppObexClientSession implements BluetoothOppObexSession {
                     if (V) {
                         Log.v(TAG, "Set header items for " + fileInfo.mFileName);
                     }
+                    BluetoothOppUtility.setLocalProfileState(mInfo.mDestination, BT_OPP_SEND, true);
                     request.setHeader(HeaderSet.NAME, fileInfo.mFileName);
                     request.setHeader(HeaderSet.TYPE, fileInfo.mMimetype);
 
@@ -508,12 +511,18 @@ public class BluetoothOppObexClientSession implements BluetoothOppObexSession {
                         if (V) {
                             timestamp = SystemClock.elapsedRealtime();
                         }
+                        // UNISOC: Bug#1072400 Add for Bluetooth Opp auto disconnect
+                        // when OBEX request or response timeout Feature
+                        BluetoothOppUtility.startDisconnectTimer(mCallback, mInfo);
 
                         readLength = a.read(buffer, 0, outputBufferSize);
                         outputStream.write(buffer, 0, readLength);
 
                         /* check remote abort */
                         responseCode = putOperation.getResponseCode();
+                        // UNISOC: Bug#1072400 Add for Bluetooth Opp auto disconnect
+                        // when OBEX request or response timeout Feature
+                        BluetoothOppUtility.stopDisconnectTimer(mCallback);
                         if (V) {
                             Log.v(TAG, "Response code is " + responseCode);
                         }
@@ -582,6 +591,7 @@ public class BluetoothOppObexClientSession implements BluetoothOppObexSession {
 
                 // Close InputStream and remove SendFileInfo from map
                 BluetoothOppUtility.closeSendFileInfo(mInfo.mUri);
+                BluetoothOppUtility.setLocalProfileState(mInfo.mDestination, BT_OPP_SEND, false);
                 try {
                     if (!error) {
                         responseCode = putOperation.getResponseCode();

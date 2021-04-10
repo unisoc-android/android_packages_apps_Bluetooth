@@ -59,6 +59,21 @@ public class AvrcpControllerService extends ProfileService {
     private static final byte JNI_PLAY_STATUS_REV_SEEK = 0x04;
     private static final byte JNI_PLAY_STATUS_ERROR = -1;
 
+    /*
+     * Browsing Media Item Attribute IDs
+     * This should be kept in sync with BTRC_MEDIA_ATTR_ID_* in bt_rc.h
+     */
+
+    private static final int JNI_MEDIA_ATTR_ID_INVALID = -1;
+    private static final int JNI_MEDIA_ATTR_ID_TITLE = 0x00000001;                                                                                                                                       
+    private static final int JNI_MEDIA_ATTR_ID_ARTIST = 0x00000002;
+    private static final int JNI_MEDIA_ATTR_ID_ALBUM = 0x00000003;
+    private static final int JNI_MEDIA_ATTR_ID_TRACK_NUM = 0x00000004;
+    private static final int JNI_MEDIA_ATTR_ID_NUM_TRACKS = 0x00000005;
+    private static final int JNI_MEDIA_ATTR_ID_GENRE = 0x00000006;
+    private static final int JNI_MEDIA_ATTR_ID_PLAYING_TIME = 0x00000007;
+
+
     /* Folder/Media Item scopes.
      * Keep in sync with AVRCP 1.6 sec. 6.10.1
      */
@@ -243,6 +258,23 @@ public class AvrcpControllerService extends ProfileService {
             return service.getConnectionState(device);
         }
 
+
+        @Override
+        public void sendPassThroughCmd(BluetoothDevice device, int keyCode, int keyState) {
+        	Log.v(TAG, "Binder Call: sendPassThroughCmd");
+        	AvrcpControllerService service = getService();
+            if (service == null) {
+                return;
+            }
+
+            if (device == null) {
+              throw new IllegalStateException("Device cannot be null!");
+            }
+
+            service.sendPassThroughCmd(device, keyCode, keyState);
+            return;
+        }
+
         @Override
         public void sendGroupNavigationCmd(BluetoothDevice device, int keyCode, int keyState) {
             Log.w(TAG, "sendGroupNavigationCmd not implemented");
@@ -262,14 +294,18 @@ public class AvrcpControllerService extends ProfileService {
         }
     }
 
-
-    /* JNI API*/
     // Called by JNI when a passthrough key was received.
     private void handlePassthroughRsp(int id, int keyState, byte[] address) {
         if (DBG) {
             Log.d(TAG, "passthrough response received as: key: " + id
                     + " state: " + keyState + "address:" + address);
         }
+
+		Intent intent = new Intent("com.android.passthroughrsp");
+		intent.putExtra("key", id);
+		intent.putExtra("keystate",keyState);
+		intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+		sendBroadcast(intent, ProfileService.BLUETOOTH_PERM);
     }
 
     private void handleGroupNavigationRsp(int id, int keyState) {
@@ -686,6 +722,25 @@ public class AvrcpControllerService extends ProfileService {
         AvrcpControllerStateMachine stateMachine = mDeviceStateMap.get(device);
         return (stateMachine == null) ? BluetoothProfile.STATE_DISCONNECTED
                 : stateMachine.getState();
+    }
+
+    public synchronized void sendPassThroughCmd(BluetoothDevice device, int keyCode, int keyState) {
+        Log.v(TAG, "sendPassThroughCmd keyCode: " + keyCode + " keyState: " + keyState);
+        if (device == null) {
+            Log.e(TAG, "sendPassThroughCmd Device is null");
+            return;
+        }
+
+        //if (!device.equals(mConnectedDevice)) {
+        //    Log.w(TAG, " Device does not match device " + device + " conn " + mConnectedDevice);
+        //    return;
+        //}
+
+        AvrcpControllerStateMachine stateMachine = getStateMachine(device);
+        if (stateMachine != null) {
+            stateMachine.sendMessage(AvrcpControllerStateMachine.MESSAGE_SEND_PASS_THROUGH_CMD,
+                keyCode, keyState, device);
+        }
     }
 
     @Override

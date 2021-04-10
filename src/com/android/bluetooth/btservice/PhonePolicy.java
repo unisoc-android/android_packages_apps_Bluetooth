@@ -32,10 +32,14 @@ import android.os.Message;
 import android.os.ParcelUuid;
 import android.os.Parcelable;
 import android.util.Log;
+import android.provider.Settings;
 
 import com.android.bluetooth.a2dp.A2dpService;
 import com.android.bluetooth.hearingaid.HearingAidService;
 import com.android.bluetooth.hfp.HeadsetService;
+import com.android.bluetooth.hfpclient.HeadsetClientService;
+import com.android.bluetooth.a2dpsink.A2dpSinkService;
+import com.android.bluetooth.pbapclient.PbapClientService;
 import com.android.bluetooth.hid.HidHostService;
 import com.android.bluetooth.pan.PanService;
 import com.android.internal.R;
@@ -389,6 +393,9 @@ class PhonePolicy {
             for (BluetoothDevice device : bondedDevices) {
                 autoConnectHeadset(device);
                 autoConnectA2dp(device);
+                autoConnectHeadsetClient();
+                autoConnectA2dpSink();
+                autoConnectPbapClient();
             }
         } else {
             debugLog("autoConnect() - BT is in quiet mode. Not initiating auto connections");
@@ -411,12 +418,28 @@ class PhonePolicy {
         }
     }
 
+    private void autoConnectA2dpSink(){
+        A2dpSinkService a2dpSinkSservice = A2dpSinkService.getA2dpSinkService();
+        final BluetoothDevice bondedDevices[] = mAdapterService.getBondedDevices();
+        Log.d(TAG," autoConnectA2dpSink hscService:" +a2dpSinkSservice + " bondedDevices:" +bondedDevices);
+        if ((bondedDevices == null) ||(a2dpSinkSservice == null)) {
+            return;
+        }
+        for (BluetoothDevice device : bondedDevices) {
+            if (a2dpSinkSservice.getPriority(device) == BluetoothProfile.PRIORITY_AUTO_CONNECT ){
+                debugLog("autoConnectA2dpSink() - Connecting A2DP with " + device.toString());
+                a2dpSinkSservice.connect(device);
+            }
+        }
+    }
+
     private void autoConnectHeadset(BluetoothDevice device) {
         final HeadsetService hsService = mFactory.getHeadsetService();
         if (hsService == null) {
             warnLog("autoConnectHeadset: service is null, failed to connect to " + device);
             return;
         }
+
         int headsetPriority = hsService.getPriority(device);
         if (headsetPriority == BluetoothProfile.PRIORITY_AUTO_CONNECT) {
             debugLog("autoConnectHeadset: Connecting HFP with " + device);
@@ -424,6 +447,39 @@ class PhonePolicy {
         } else {
             debugLog("autoConnectHeadset: skipped auto-connect HFP with device " + device
                     + " priority " + headsetPriority);
+        }
+    }
+
+    private void autoConnectHeadsetClient(){
+        HeadsetClientService  hscService = HeadsetClientService.getHeadsetClientService();
+
+        final BluetoothDevice bondedDevices[] = mAdapterService.getBondedDevices();
+        Log.d(TAG," autoConnectHeadsetClient hscService:" +hscService + " bondedDevices:" +bondedDevices);
+        if ((bondedDevices == null) ||(hscService == null)) {
+            return;
+        }
+        for (BluetoothDevice device : bondedDevices) {
+             Log.d(TAG, "autoConnectHeadsetClient getPriority:" +hscService.getPriority(device));
+             if (hscService.getPriority(device) == BluetoothProfile.PRIORITY_AUTO_CONNECT ){
+                 debugLog("autoConnectHeadsetClient() - Connecting HFP with " + device.toString());
+                 hscService.connect(device);
+                 hscService.disableAutoConnect( );
+             }
+       }
+    }
+
+    private void autoConnectPbapClient() {
+        PbapClientService pbapClientService = PbapClientService.getPbapClientService();
+        final BluetoothDevice bondedDevices[] = mAdapterService.getBondedDevices();
+        Log.d(TAG," autoConnect pbapClient servcie:" + pbapClientService + " bondedDevices:" +bondedDevices);
+        if ((bondedDevices == null) ||(pbapClientService == null)) {
+            return;
+        }
+        for (BluetoothDevice device : bondedDevices) {
+            if (pbapClientService.getPriority(device) == BluetoothProfile.PRIORITY_AUTO_CONNECT ){
+                debugLog("autoConnectPbapClient() - Connecting pbap with " + device.toString());
+                pbapClientService.connect(device);
+            }
         }
     }
 

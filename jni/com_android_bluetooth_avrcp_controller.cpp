@@ -739,7 +739,8 @@ static btrc_ctrl_callbacks_t sBluetoothAvrcpCallbacks = {
     btavrcp_set_browsed_player_callback,
     btavrcp_set_addressed_player_callback,
     btavrcp_addressed_player_changed_callback,
-    btavrcp_now_playing_content_changed_callback};
+    btavrcp_now_playing_content_changed_callback
+};
 
 static void classInitNative(JNIEnv* env, jclass clazz) {
   method_handlePassthroughRsp =
@@ -1226,7 +1227,7 @@ static JNINativeMethod sMethods[] = {
     {"changeFolderPathNative", "([BBJ)V", (void*)changeFolderPathNative},
     {"playItemNative", "([BBJI)V", (void*)playItemNative},
     {"setBrowsedPlayerNative", "([BI)V", (void*)setBrowsedPlayerNative},
-    {"setAddressedPlayerNative", "([BI)V", (void*)setAddressedPlayerNative},
+    {"setAddressedPlayerNative", "([BI)V", (void*)setAddressedPlayerNative}
 };
 
 int register_com_android_bluetooth_avrcp_controller(JNIEnv* env) {

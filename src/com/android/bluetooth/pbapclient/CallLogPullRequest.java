@@ -103,6 +103,8 @@ public class CallLogPullRequest extends PullRequest {
                         mCallCounter.put(phoneNumber, 1);
                     }
                 }
+                //add VcardName into CallLog
+                values.put(CallLog.Calls.CACHED_NAME, vcard.getDisplayName());
                 List<Pair<String, String>> irmc = vcard.getUnknownXData();
                 SimpleDateFormat parser = new SimpleDateFormat(TIMESTAMP_FORMAT);
                 if (irmc != null) {

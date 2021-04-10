@@ -1054,6 +1054,20 @@ static jboolean getAdapterPropertyNative(JNIEnv* env, jobject obj, jint type) {
   int ret = sBluetoothInterface->get_adapter_property((bt_property_type_t)type);
   return (ret == BT_STATUS_SUCCESS) ? JNI_TRUE : JNI_FALSE;
 }
+static jboolean setProfileStateNative(JNIEnv* env, jobject obj, jbyteArray address,
+                                   jint profile,jboolean state) {
+  ALOGV("%s", __func__);
+
+  if (!sBluetoothInterface) return JNI_FALSE;
+  jbyte* addr = env->GetByteArrayElements(address, NULL);
+  if (addr == NULL) {
+    jniThrowIOException(env, EINVAL);
+    return JNI_FALSE;
+  }
+
+  int ret = sBluetoothInterface->sprd_set_profile_state((RawAddress*)addr,(bt_sprd_profile_t)profile,state);
+  return (ret == BT_STATUS_SUCCESS) ? JNI_TRUE : JNI_FALSE;
+}
 
 static jboolean getDevicePropertyNative(JNIEnv* env, jobject obj,
                                         jbyteArray address, jint type) {
@@ -1272,7 +1286,8 @@ static JNINativeMethod sMethods[] = {
     {"factoryResetNative", "()Z", (void*)factoryResetNative},
     {"interopDatabaseClearNative", "()V", (void*)interopDatabaseClearNative},
     {"interopDatabaseAddNative", "(I[BI)V", (void*)interopDatabaseAddNative},
-    {"obfuscateAddressNative", "([B)[B", (void*)obfuscateAddressNative}};
+    {"obfuscateAddressNative", "([B)[B", (void*)obfuscateAddressNative},
+    {"setProfileStateNative", "([BIZ)Z",(void*)setProfileStateNative}};
 
 int register_com_android_bluetooth_btservice_AdapterService(JNIEnv* env) {
   return jniRegisterNativeMethods(

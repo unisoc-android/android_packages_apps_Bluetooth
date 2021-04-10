@@ -50,6 +50,7 @@ import android.util.Log;
 import com.android.bluetooth.R;
 
 import java.util.HashMap;
+import java.lang.NullPointerException;
 
 /**
  * This class handles the updating of the Notification Manager for the cases
@@ -243,9 +244,13 @@ class BluetoothOppNotification {
 
     private void updateActiveNotification() {
         // Active transfers
-        Cursor cursor =
-                mContentResolver.query(BluetoothShare.CONTENT_URI, null, WHERE_RUNNING, null,
-                        BluetoothShare._ID);
+        Cursor cursor = null;
+        try {
+            cursor = mContentResolver.query(BluetoothShare.CONTENT_URI, null, WHERE_RUNNING, null,
+                    BluetoothShare._ID);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "updateActiveNotification NullPointerException");
+        }
         if (cursor == null) {
             return;
         }
@@ -289,7 +294,7 @@ class BluetoothOppNotification {
             if (fileName == null) {
                 fileName = mContext.getString(R.string.unknown_file);
             }
-
+            fileName = BluetoothOppUtility.switchStrToRTL(fileName);
             String batchID = Long.toString(timeStamp);
 
             // sending objects in one batch has same timeStamp
@@ -404,9 +409,14 @@ class BluetoothOppNotification {
         int inboundFailNumber = 0;
 
         // Creating outbound notification
-        Cursor cursor =
-                mContentResolver.query(BluetoothShare.CONTENT_URI, null, WHERE_COMPLETED_OUTBOUND,
-                        null, BluetoothShare.TIMESTAMP + " DESC");
+        Cursor cursor = null;
+        try {
+            cursor =
+                    mContentResolver.query(BluetoothShare.CONTENT_URI, null, WHERE_COMPLETED_OUTBOUND,
+                            null, BluetoothShare.TIMESTAMP + " DESC");
+        } catch (NullPointerException e) {
+            Log.e(TAG, "updateCompletedNotification NullPointerException");
+        }
         if (cursor == null) {
             return;
         }
@@ -541,9 +551,13 @@ class BluetoothOppNotification {
     }
 
     private void updateIncomingFileConfirmNotification() {
-        Cursor cursor =
-                mContentResolver.query(BluetoothShare.CONTENT_URI, null, WHERE_CONFIRM_PENDING,
-                        null, BluetoothShare._ID);
+        Cursor cursor = null;
+        try {
+            cursor = mContentResolver.query(BluetoothShare.CONTENT_URI, null, WHERE_CONFIRM_PENDING,
+                    null, BluetoothShare._ID);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "updateIncomingFileConfirmNotification NullPointerException");
+        }
 
         if (cursor == null) {
             return;
@@ -552,6 +566,7 @@ class BluetoothOppNotification {
         for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
             BluetoothOppTransferInfo info = new BluetoothOppTransferInfo();
             BluetoothOppUtility.fillRecord(mContext, cursor, info);
+            info.mFileName = BluetoothOppUtility.switchStrToRTL(info.mFileName);
             Uri contentUri = Uri.parse(BluetoothShare.CONTENT_URI + "/" + info.mID);
             Intent baseIntent = new Intent().setDataAndNormalize(contentUri)
                     .setClassName(Constants.THIS_PACKAGE_NAME,

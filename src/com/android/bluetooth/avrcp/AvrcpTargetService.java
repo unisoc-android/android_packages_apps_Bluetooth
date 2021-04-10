@@ -77,13 +77,17 @@ public class AvrcpTargetService extends ProfileService {
             }
             mCurrentData = data;
 
-            mNativeInterface.sendMediaUpdate(metadata, state, queue);
+            if (mNativeInterface != null) {
+                mNativeInterface.sendMediaUpdate(metadata, state, queue);
+            }
         }
 
         @Override
         public void run(boolean availablePlayers, boolean addressedPlayers,
                 boolean uids) {
-            mNativeInterface.sendFolderUpdate(availablePlayers, addressedPlayers, uids);
+            if (mNativeInterface != null) {
+                mNativeInterface.sendFolderUpdate(availablePlayers, addressedPlayers, uids);
+            }
         }
     }
 
@@ -265,7 +269,7 @@ public class AvrcpTargetService extends ProfileService {
         int deviceVolume =
                 (int) Math.floor((double) avrcpVolume * sDeviceMaxVolume / AVRCP_MAX_VOL);
         if (DEBUG) {
-            Log.d(TAG, "SendVolumeChanged: avrcpVolume=" + avrcpVolume
+            Log.d(TAG, "setVolume: avrcpVolume=" + avrcpVolume
                     + " deviceVolume=" + deviceVolume
                     + " sDeviceMaxVolume=" + sDeviceMaxVolume);
         }

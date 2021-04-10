@@ -114,6 +114,10 @@
       <item quantity="other"><xliff:g id="UNSUCCESSFUL_NUMBER_1">%1$d</xliff:g> പരാജയം.</item>
       <item quantity="one"><xliff:g id="UNSUCCESSFUL_NUMBER_0">%1$d</xliff:g> പരാജയം.</item>
     </plurals>
+    <plurals name="noti_caption_success">
+      <item quantity="one">"<xliff:g id="successful_number">%1$d</xliff:g> വിജയിച്ചിരിക്കുന്നു, %2$s"</item>
+      <item quantity="other">"<xliff:g id="successful_number">%1$d</xliff:g> വിജയിച്ചിരിക്കുന്നു, %2$s"</item>
+    </plurals>
     <!-- String.format failed for translation -->
     <!-- no translation found for noti_caption_success (1572472450257645181) -->
     <string name="transfer_menu_clear_all" msgid="790017462957873132">"ലിസ്റ്റ് മായ്‌ക്കുക"</string>

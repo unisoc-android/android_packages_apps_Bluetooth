@@ -530,27 +530,26 @@ final class BondStateMachine extends StateMachine {
 
     private void clearProfilePriority(BluetoothDevice device) {
         HidHostService hidService = HidHostService.getHidHostService();
-        A2dpService a2dpService = A2dpService.getA2dpService();
-        HeadsetService headsetService = HeadsetService.getHeadsetService();
-        HeadsetClientService headsetClientService = HeadsetClientService.getHeadsetClientService();
-        A2dpSinkService a2dpSinkService = A2dpSinkService.getA2dpSinkService();
-        PbapClientService pbapClientService = PbapClientService.getPbapClientService();
-
         if (hidService != null) {
             hidService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
         }
+        A2dpService a2dpService = A2dpService.getA2dpService();
         if (a2dpService != null) {
             a2dpService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
         }
+        HeadsetService headsetService = HeadsetService.getHeadsetService();
         if (headsetService != null) {
             headsetService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
         }
+        HeadsetClientService headsetClientService = HeadsetClientService.getHeadsetClientService();
         if (headsetClientService != null) {
             headsetClientService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
         }
+        A2dpSinkService a2dpSinkService = A2dpSinkService.getA2dpSinkService();
         if (a2dpSinkService != null) {
             a2dpSinkService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
         }
+        PbapClientService pbapClientService = PbapClientService.getPbapClientService();
         if (pbapClientService != null) {
             pbapClientService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
         }

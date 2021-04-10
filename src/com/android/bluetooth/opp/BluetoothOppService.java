@@ -45,6 +45,7 @@ import android.content.IntentFilter;
 import android.database.CharArrayBuffer;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
@@ -68,6 +69,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.lang.NullPointerException;
 
 import javax.obex.ObexTransport;
 
@@ -614,9 +616,16 @@ public class BluetoothOppService extends ProfileService implements IObexConnecti
                     }
                     mPendingUpdate = false;
                 }
-                Cursor cursor =
-                        getContentResolver().query(BluetoothShare.CONTENT_URI, null, null, null,
-                                BluetoothShare._ID);
+                Cursor cursor = null;
+                try {
+                    cursor =
+                            getContentResolver().query(BluetoothShare.CONTENT_URI, null, null, null,
+                                    BluetoothShare._ID);
+                } catch (SQLiteCantOpenDatabaseException e) {
+                    Log.e(TAG, "run SQLiteCantOpenDatabaseException: Could not open database");
+                } catch (NullPointerException e) {
+                    Log.e(TAG, "run NullPointerException");
+                }
 
                 if (cursor == null) {
                     mUpdateThreadRunning = false;
@@ -1078,9 +1087,16 @@ public class BluetoothOppService extends ProfileService implements IObexConnecti
         }
 
         // Keep the latest inbound and successful shares.
-        Cursor cursor =
-                contentResolver.query(BluetoothShare.CONTENT_URI, new String[]{BluetoothShare._ID},
-                        WHERE_INBOUND_SUCCESS, null, BluetoothShare._ID); // sort by id
+        Cursor cursor = null;
+        try {
+            cursor =
+                    contentResolver.query(BluetoothShare.CONTENT_URI, new String[]{BluetoothShare._ID},
+                            WHERE_INBOUND_SUCCESS, null, BluetoothShare._ID); // sort by id
+        } catch (SQLiteCantOpenDatabaseException e) {
+            Log.e(TAG, "trimDatabase SQLiteCantOpenDatabaseException: Could not open database");
+        } catch (NullPointerException e) {
+            Log.e(TAG, "trimDatabase NullPointerException");
+        }
         if (cursor == null) {
             return;
         }

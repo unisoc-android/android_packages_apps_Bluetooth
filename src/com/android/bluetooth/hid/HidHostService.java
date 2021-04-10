@@ -47,7 +47,7 @@ import java.util.Map;
  * @hide
  */
 public class HidHostService extends ProfileService {
-    private static final boolean DBG = false;
+    private static final boolean DBG = Utils.isDebug();
     private static final String TAG = "BluetoothHidHostService";
 
     private Map<BluetoothDevice, Integer> mInputDevices;
@@ -175,13 +175,18 @@ public class HidHostService extends ProfileService {
                         Log.d(TAG, "MESSAGE_CONNECT_STATE_CHANGED newState:" + convertHalState(
                                 halState) + ", prevState:" + prevState);
                     }
+                    AdapterService adapterService = AdapterService.getAdapterService();
                     if (halState == CONN_STATE_CONNECTED
                             && prevState == BluetoothHidHost.STATE_DISCONNECTED
                             && (!okToConnect(device))) {
                         if (DBG) {
                             Log.d(TAG, "Incoming HID connection rejected");
                         }
-                        virtualUnPlugNative(Utils.getByteAddress(device));
+                        if (adapterService.getBondState(device) != BluetoothDevice.BOND_BONDED) {
+                            virtualUnPlugNative(Utils.getByteAddress(device));
+                        } else {
+                            disconnectHidNative(Utils.getByteAddress(device));
+                        }
                     } else {
                         broadcastConnectionState(device, convertHalState(halState));
                     }
@@ -190,7 +195,6 @@ public class HidHostService extends ProfileService {
                         mTargetDevice = null;
                         // local device originated connection to hid device, move out
                         // of quiet mode
-                        AdapterService adapterService = AdapterService.getAdapterService();
                         adapterService.enable(false);
                     }
                 }

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<string name="permlab_bluetoothShareManager">"Acessar o gestor de downloads."</string>
+<string name="permdesc_bluetoothShareManager">"Permitir a aplicação para o acesso"</string>
+<string name="permlab_bluetoothWhitelist">"Acesso ao dispositivo Bluetooth autorizado."</string>
+<string name="permdesc_bluetoothWhitelist">"Permitir a aplicação fonecer permissão temporária a um dispositivo Bluetooth, permitindo que o dispositivo envie os arquivos para este aparelho sem a confirmação de usuário."</string>
+<string name="bt_share_picker_label">"Bluetooth"</string>
+<string name="unknown_device">"Aparelho deseconhecido"</string>
+<string name="unknownNumber">"Desconhecido"</string>
+<string name="airplane_error_title">"Modo avião"</string>
+<string name="airplane_error_msg">"Você não pode utilizar o Bluetooth no modo aéreo."</string>
+<string name="bt_enable_line1">"Para utilizar os serviços de Bluetooth, você deve ligar primeiro o Bluetooth."</string>
+<string name="bt_enable_line2">"Ligar o Bluetooth agora?"</string>
+<string name="bt_enable_cancel">"Cancelar"</string>
+<string name="bt_enable_ok">"Ativar"</string>
+<string name="incoming_file_confirm_title">"Transferência de Arquivo"</string>
+<string name="incoming_file_confirm_content">"Aceitar arquivo de entrada?"</string>
+<string name="incoming_file_confirm_cancel">"Recusar"</string>
+<string name="incoming_file_confirm_ok">"Aceitar"</string>
+<string name="incoming_file_confirm_timeout_ok">"OK"</string>
+<string name="incoming_file_confirm_timeout_content">"O limite de tempo expirou ao aceitar um arquivo de entrada de \u0022<xliff:g id="sender">%1$s</xliff:g>\u0022"</string>
+<string name="incoming_file_confirm_Notification_title">"Arquivo de entrada"</string>
+<string name="incoming_file_confirm_Notification_content">"<xliff:g id="sender">%1$s</xliff:g> está pronto para enviar <xliff:g id="file">%2$s</xliff:g>"</string>
+<string name="notification_receiving">"Compartilhar por Bluetooth: Recebendo <xliff:g id="file">%1$s</xliff:g>"</string>
+<string name="notification_received">"Compartilhar por Bluetooth: Recebido <xliff:g id="file">%1$s</xliff:g>"</string>
+<string name="notification_received_fail">"Compartilhar por Bluetooth: O arquivo <xliff:g id="file">%1$s</xliff:g> não foi recebido"</string>
+<string name="notification_sending">"Compartilhar por Bluetooth: Enviando <xliff:g id="file">%1$s</xliff:g>"</string>
+<string name="notification_sent">"Compartilhar por Bluetooth: Enviado <xliff:g id="file">%1$s</xliff:g>"</string>
+<string name="notification_sent_complete">"100% completo"</string>
+<string name="notification_sent_fail">"Compartilhar por Bluetooth: O arquivo <xliff:g id="file">%1$s</xliff:g> não foi enviado"</string>
+<string name="download_title">"Transferência de Arquivo"</string>
+<string name="download_line1">"De: \u0022<xliff:g id="sender">%1$s</xliff:g>\u0022"</string>
+<string name="download_line2">"Arquivo: <xliff:g id="file">%1$s</xliff:g>"</string>
+<string name="download_line3">"Tamanho do arquivo: <xliff:g id="size">%1$s</xliff:g>"</string>
+<string name="download_line5">"Recebendo arquivo\u2026"</string>
+<string name="download_cancel">"Parar"</string>
+<string name="download_ok">"Ocultar"</string>
+<string name="incoming_line1">"De"</string>
+<string name="incoming_line2">"Nome de arquivo"</string>
+<string name="incoming_line3">"Por tamanho"</string>
+<string name="download_fail_line1">"Arquivo não recebido"</string>
+<string name="download_fail_line2">"Arquivo: <xliff:g id="file">%1$s</xliff:g>"</string>
+<string name="download_fail_line3">"Motivo: <xliff:g id="reason">%1$s</xliff:g>"</string>
+<string name="download_fail_ok">"OK"</string>
+<string name="download_succ_line5">"Arquivo recebido"</string>
+<string name="download_succ_ok">"Abrir"</string>
+<string name="upload_line1">"Para: \u0022<xliff:g id="recipient">%1$s</xliff:g>\u0022"</string>
+<string name="upload_line3">"Tipo de arquivo: <xliff:g id="type">%1$s</xliff:g> (<xliff:g id="size">%2$s</xliff:g>)"</string>
+<string name="upload_line5">"Enviando arquivo\u2026"</string>
+<string name="upload_succ_line5">"Arquivo enviado"</string>
+<string name="upload_succ_ok">"OK"</string>
+<string name="upload_fail_line1">"O arquivo não foi enviado para \u0022<xliff:g id="recipient">%1$s</xliff:g>\u0022."</string>
+<string name="upload_fail_line1_2">"Arquivo: <xliff:g id="file">%1$s</xliff:g>"</string>
+<string name="upload_fail_ok">"Tente novamente"</string>
+<string name="upload_fail_cancel">"Fechar"</string>
+<string name="bt_error_btn_ok">"OK"</string>
+<string name="unknown_file">"Arquivo desconhecido"</string>
+<string name="unknown_file_desc">"Não há aplicativo compatível para este tipo de arquivo. \n"</string>
+<string name="not_exist_file">"Nenhum arquivo"</string>
+<string name="not_exist_file_desc">"O arquivo não existe. \n"</string>
+<string name="enabling_progress_title">"Por favor aguarde\u2026"</string>
+<string name="enabling_progress_content">"Ligar Bluetooth\u2026"</string>
+<string name="bt_toast_1">"O arquivo será recebido. Verificar o progresso no painel de notificações."</string>
+<string name="bt_toast_2">"O arquivo não pode ser recebido."</string>
+<string name="bt_toast_3">"O recebimento de arquivos de \u0022<xliff:g id="sender">%1$s</xliff:g>\u0022foi interrompido"</string>
+<string name="bt_toast_4">"Enviar arquivo para \u0022<xliff:g id="recipient">%1$s</xliff:g>\u0022"</string>
+<string name="bt_toast_5">"Enviando <xliff:g id="number">%1$s</xliff:g> arquivos para \u0022<xliff:g id="recipient">%2$s</xliff:g>\u0022"</string>
+<string name="bt_toast_6">"O envio de arquivos para \u0022<xliff:g id="recipient">%1$s</xliff:g>\u0022foi interrompido"</string>
+<string name="bt_sm_2_1_nosdcard">"Não há espaço em disco no dispositivo USB para salvar o arquivo de \u0022<xliff:g id="sender">%1$s</xliff:g>\u0022"</string>
+<string name="bt_sm_2_1_default">"Não há espaço em disco no cartão SD para salvar o arquivo de \u0022<xliff:g id="sender">%1$s</xliff:g>\u0022"</string>
+<string name="bt_sm_2_2">"Espaço necessário: <xliff:g id="size">%1$s</xliff:g>"</string>
+<string name="ErrorTooManyRequests">"Há muitas solicitações sendo processadas. Tente novamente mais tarde."</string>
+<string name="status_pending">"A transferência de arquivos não começou ainda."</string>
+<string name="status_running">"A transferência de arquivos está em curso."</string>
+<string name="status_success">"Transferência de arquivo concluída com êxito."</string>
+<string name="status_not_accept">"Conteúdo não suportado."</string>
+<string name="status_forbidden">"Transferência proibida pelo dispositivo de destino."</string>
+<string name="status_canceled">"Transferência cancelada pelo usuário."</string>
+<string name="status_file_error">"Problema de armazenamento"</string>
+<string name="status_no_sd_card_nosdcard">"Nenhuma memória USB"</string>
+<string name="status_no_sd_card_default">"Sem cartão SD"</string>
+<string name="status_connection_error">"Não foi possível conectar."</string>
+<string name="status_protocol_error">"A solicitação não pode ser tratada corretamente."</string>
+<string name="status_unknown_error">"Erro desconhecido."</string>
+<string name="btopp_live_folder">"Bluetooth recebido"</string>
+<string name="opp_notification_group">"Compartilhar por Bluetooth"</string>
+<string name="download_success">"<xliff:g id="file_size">%1$s</xliff:g> Recebimento concluído."</string>
+<string name="upload_success">"<xliff:g id="file_size">%1$s</xliff:g> Envio concluído."</string>
+<string name="inbound_history_title">"Transferências de entrada"</string>
+<string name="outbound_history_title">"Transferências de saída"</string>
+<string name="no_transfers">"Histórico de transferência está vazio."</string>
+<string name="transfer_clear_dlg_msg">"Todos os itens serão apagados da lista."</string>
+<string name="outbound_noti_title">"Compartilhamento por Bluetooth: Arquivos enviados"</string>
+<string name="inbound_noti_title">"Compartilhamento por Bluetooth: Arquivos recebidos"</string>
+<plurals name="noti_caption_unsuccessful">
+<item quantity="one">"<xliff:g id="unsuccessful_number">%1$d</xliff:g> não concluído."</item>
+<item quantity="other">"<xliff:g id="unsuccessful_number">%1$d</xliff:g> não concluído."</item>
+</plurals>
+<plurals name="noti_caption_success">
+<item quantity="one">"<xliff:g id="successful_number">%1$d</xliff:g> bem-sucedido, %2$s"</item>
+<item quantity="other">"<xliff:g id="successful_number">%1$d</xliff:g> bem-sucedido, %2$s"</item>
+</plurals>
+<string name="transfer_menu_clear_all">"Limpar lista"</string>
+<string name="transfer_menu_open">"Abrir"</string>
+<string name="transfer_menu_clear">"Limpar da lista"</string>
+<string name="transfer_clear_dlg_title">"Limpar"</string>
+<string name="bluetooth_a2dp_sink_queue_name">"Tocando agora"</string>
+<string name="bluetooth_map_settings_save">"Salvar"</string>
+<string name="bluetooth_map_settings_cancel">"Cancelar"</string>
+<string name="bluetooth_map_settings_intro">"Selecione as contas que deseja compartilhar através do Bluetooth. Ainda terá que aceitar qualquer acesso às contas quando conectar."</string>
+<string name="bluetooth_map_settings_count">"Slots restantes:"</string>
+<string name="bluetooth_map_settings_app_icon">"Ícone de Aplicação"</string>
+<string name="bluetooth_map_settings_title">"Ajuste de Compartilhamento de Mensagem de Bluetooth"</string>
+<string name="bluetooth_map_settings_no_account_slots_left">"Conta não pode ser selecionada. 0 slots restantes"</string>
+<string name="bluetooth_connected">"Áudio de Bluetooth ligado"</string>
+<string name="bluetooth_disconnected">"Áudio de Bluetooth desligado"</string>
+<string name="a2dp_sink_mbs_label">"Áudio Bluetooth"</string>
+<string name="bluetooth_opp_file_limit_exceeded">"Arquivos com mais de 4 GB não podem ser transferidos"</string>
+</resources>

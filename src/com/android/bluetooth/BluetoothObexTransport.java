@@ -38,6 +38,10 @@ public class BluetoothObexTransport implements ObexTransport {
 
     @Override
     public void close() throws IOException {
+        if (mSocket == null) {
+            return;
+        }
+
         mSocket.close();
     }
 
@@ -53,11 +57,19 @@ public class BluetoothObexTransport implements ObexTransport {
 
     @Override
     public InputStream openInputStream() throws IOException {
+        if (mSocket == null) {
+            return null;
+        }
+
         return mSocket.getInputStream();
     }
 
     @Override
     public OutputStream openOutputStream() throws IOException {
+        if (mSocket == null) {
+            return null;
+        }
+
         return mSocket.getOutputStream();
     }
 
@@ -83,6 +95,11 @@ public class BluetoothObexTransport implements ObexTransport {
 
     @Override
     public int getMaxTransmitPacketSize() {
+        if (mSocket == null) {
+            return -1;
+        }
+
+
         if (mSocket.getConnectionType() != BluetoothSocket.TYPE_L2CAP) {
             return -1;
         }
@@ -91,6 +108,10 @@ public class BluetoothObexTransport implements ObexTransport {
 
     @Override
     public int getMaxReceivePacketSize() {
+        if (mSocket == null) {
+            return -1;
+        }
+
         if (mSocket.getConnectionType() != BluetoothSocket.TYPE_L2CAP) {
             return -1;
         }
@@ -106,6 +127,10 @@ public class BluetoothObexTransport implements ObexTransport {
 
     @Override
     public boolean isSrmSupported() {
+        if (mSocket == null) {
+            return false;
+        }
+
         if (mSocket.getConnectionType() == BluetoothSocket.TYPE_L2CAP) {
             return true;
         }

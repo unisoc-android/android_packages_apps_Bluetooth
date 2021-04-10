@@ -16,11 +16,13 @@
 
 package com.android.bluetooth.gatt;
 
+import com.android.bluetooth.Utils;
+
 /**
  * GattService configuration.
  */
 /*package*/ class GattServiceConfig {
-    public static final boolean DBG = false;
+    public static final boolean DBG = Utils.isDebug();
     public static final boolean VDBG = false;
     public static final String TAG_PREFIX = "BtGatt.";
     public static final boolean DEBUG_ADMIN = true;

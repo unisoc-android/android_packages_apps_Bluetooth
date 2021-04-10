@@ -268,6 +268,7 @@ public class BluetoothOppManager {
             mMimeTypeOfSendingFile = mimeType;
             mIsHandoverInitiated = isHandover;
             Uri uri = Uri.parse(uriString);
+            grantReadPermissionForUri(uri);
             BluetoothOppSendFileInfo sendFileInfo =
                     BluetoothOppSendFileInfo.generateFileInfo(mContext, uri, mimeType,
                     fromExternal);
@@ -286,6 +287,7 @@ public class BluetoothOppManager {
             mUrisOfSendingFiles = new ArrayList<Uri>();
             mIsHandoverInitiated = isHandover;
             for (Uri uri : uris) {
+                grantReadPermissionForUri(uri);
                 BluetoothOppSendFileInfo sendFileInfo =
                         BluetoothOppSendFileInfo.generateFileInfo(mContext, uri, mimeType,
                         fromExternal);
@@ -296,6 +298,21 @@ public class BluetoothOppManager {
             storeApplicationData();
         }
     }
+
+   /**
+    * Granting Temporary Permissions to a URI of 3rd party app for retryTransfer.
+    */
+    private void grantReadPermissionForUri(Uri uri) {
+        Log.d(TAG, "granting temporary permissions for " + uri.toString());
+        if ("content".equals(uri.getScheme())) {
+            try {
+                mContext.grantUriPermission(mContext.getPackageName(), uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Exception e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+    }
+
 
     /**
      * Get the current status of Bluetooth hardware.

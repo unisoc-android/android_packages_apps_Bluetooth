@@ -41,6 +41,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.net.Uri;
 import android.util.Log;
 
@@ -200,7 +201,12 @@ public final class BluetoothOppProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        SQLiteDatabase db = null;
+        try {
+            db = mOpenHelper.getWritableDatabase();
+        } catch (SQLiteCantOpenDatabaseException e) {
+            Log.e(TAG, "insert SQLiteCantOpenDatabaseException: Could not open database");
+        }
 
         if (sURIMatcher.match(uri) != SHARES) {
             throw new IllegalArgumentException("insert: Unknown/Invalid URI " + uri);
@@ -265,7 +271,12 @@ public final class BluetoothOppProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
-        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+        SQLiteDatabase db = null;
+        try {
+            db = mOpenHelper.getReadableDatabase();
+        } catch (SQLiteCantOpenDatabaseException e) {
+            Log.e(TAG, "query SQLiteCantOpenDatabaseException: Could not open database");
+        }
 
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         qb.setStrict(true);
@@ -339,7 +350,12 @@ public final class BluetoothOppProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        SQLiteDatabase db = null;
+        try {
+            db = mOpenHelper.getWritableDatabase();
+        } catch (SQLiteCantOpenDatabaseException e) {
+            Log.e(TAG, "update SQLiteCantOpenDatabaseException: Could not open database");
+        }
 
         int count = 0;
         long rowId;
@@ -364,7 +380,7 @@ public final class BluetoothOppProvider extends ContentProvider {
                     myWhere += " ( " + BluetoothShare._ID + " = " + rowId + " ) ";
                 }
 
-                if (values.size() > 0) {
+                if (values.size() > 0 && null != db) {
                     count = db.update(DB_TABLE, values, myWhere, selectionArgs);
                 }
                 break;
@@ -379,8 +395,13 @@ public final class BluetoothOppProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
-        int count;
+        SQLiteDatabase db = null;
+        try {
+            db = mOpenHelper.getWritableDatabase();
+        } catch (SQLiteCantOpenDatabaseException e) {
+            Log.e(TAG, "delete SQLiteCantOpenDatabaseException: Could not open database");
+        }
+        int count = 0;
         int match = sURIMatcher.match(uri);
         switch (match) {
             case SHARES:
@@ -401,7 +422,9 @@ public final class BluetoothOppProvider extends ContentProvider {
                     myWhere += " ( " + BluetoothShare._ID + " = " + rowId + " ) ";
                 }
 
-                count = db.delete(DB_TABLE, myWhere, selectionArgs);
+                if (null != db) {
+                    count = db.delete(DB_TABLE, myWhere, selectionArgs);
+                }
                 break;
             }
             default:

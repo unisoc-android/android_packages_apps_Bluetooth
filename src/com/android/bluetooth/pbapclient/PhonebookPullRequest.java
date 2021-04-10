@@ -25,6 +25,8 @@ import android.provider.ContactsContract;
 import android.util.Log;
 
 import com.android.vcard.VCardEntry;
+import com.android.vcard.VCardProperty;
+import com.android.vcard.VCardConstants;
 
 import java.util.ArrayList;
 
@@ -43,6 +45,11 @@ public class PhonebookPullRequest extends PullRequest {
         path = PbapClientConnectionHandler.PB_PATH;
     }
 
+    public PhonebookPullRequest(Context context, String path, Account account) {
+        mContext = context;
+        mAccount = account;
+        this.path = path;
+    }
 
     @Override
     public void onPullComplete() {
@@ -59,12 +66,37 @@ public class PhonebookPullRequest extends PullRequest {
             ArrayList<ContentProviderOperation> insertOperations = new ArrayList<>();
             ArrayList<ContentProviderOperation> currentContactOperations;
             // Group insert operations together to minimize inter process communication and improve
+
+            int type;
+            int type_pb = 0;
+            int type_sim_pb = 1;
+            if (path.equals(PbapClientConnectionHandler.PB_PATH)) {
+                type = type_pb;
+            }
+            else if (path.equals(PbapClientConnectionHandler.PB_SIM_PATH)) {
+                type = type_sim_pb;
+            }
+            else {
+                Log.w(TAG, "Unknown path type:" + path);
+                return;
+            }
             // processing time.
             for (VCardEntry e : mEntries) {
                 if (Thread.currentThread().isInterrupted()) {
                     Log.e(TAG, "Interrupted durring insert.");
                     break;
                 }
+
+                //add string:SIM to the prefix name
+                if (type == type_sim_pb) {
+                    String prefixName = e.getNameData().getPrefix();
+
+                    VCardProperty property = new VCardProperty();
+                    property.setName(VCardConstants.PROPERTY_N);
+                    property.setValues("family", "given", "middle", "SIM1:"+prefixName);
+                    e.addProperty(property);
+                }
+
                 int numberOfOperations = insertOperations.size();
                 // Append current vcard to list of insert operations.
                 e.constructInsertOperations(contactsProvider, insertOperations);

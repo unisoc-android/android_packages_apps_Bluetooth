@@ -30,11 +30,14 @@ import android.os.Bundle;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
+import android.bluetooth.BluetoothUuid;
+import android.os.ParcelUuid;
 
 import com.android.bluetooth.Utils;
 import com.android.bluetooth.btservice.AdapterService;
 import com.android.bluetooth.btservice.ProfileService;
 import com.android.bluetooth.hfpclient.connserv.HfpClientConnectionService;
+import com.android.bluetooth.a2dpsink.A2dpSinkService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +53,7 @@ import java.util.UUID;
  * @hide
  */
 public class HeadsetClientService extends ProfileService {
-    private static final boolean DBG = false;
+    private static final boolean DBG = Utils.isDebug();
     private static final String TAG = "HeadsetClientService";
 
     private HashMap<BluetoothDevice, HeadsetClientStateMachine> mStateMachineMap = new HashMap<>();
@@ -63,6 +66,10 @@ public class HeadsetClientService extends ProfileService {
     private static final int MAX_STATE_MACHINES_POSSIBLE = 100;
 
     public static final String HFP_CLIENT_STOP_TAG = "hfp_client_stop_tag";
+
+    static final ParcelUuid[] HandsFree_UUID = {
+        BluetoothUuid.Handsfree
+    };
 
     @Override
     public IProfileServiceBinder initBinder() {
@@ -134,8 +141,10 @@ public class HeadsetClientService extends ProfileService {
         }
 
         // Stop the handler thread
-        mSmThread.quit();
-        mSmThread = null;
+        if (mSmThread != null) {
+            mSmThread.quit();
+            mSmThread = null;
+        }
 
         mNativeInterface.cleanupNative();
         mNativeInterface = null;
@@ -226,6 +235,7 @@ public class HeadsetClientService extends ProfileService {
             if (service == null) {
                 return false;
             }
+            service.disableAutoConnect();
             return service.disconnect(device);
         }
 
@@ -462,14 +472,55 @@ public class HeadsetClientService extends ProfileService {
         sHeadsetClientService = instance;
     }
 
+     public void disableAutoConnect(){
+       for (Map.Entry<BluetoothDevice, HeadsetClientStateMachine> entry :
+                mStateMachineMap.entrySet()) {
+            if (entry.getValue() != null) {
+                entry.getValue().disableAutoConnect();
+                }
+            }
+
+    }
+
     public boolean connect(BluetoothDevice device) {
         enforceCallingOrSelfPermission(BLUETOOTH_ADMIN_PERM, "Need BLUETOOTH ADMIN permission");
         if (DBG) {
             Log.d(TAG, "connect " + device);
         }
+        if(device == null)return false;
+        ParcelUuid[] featureUuids = device.getUuids();        
+        if(BluetoothUuid.containsAllUuids(featureUuids ,HandsFree_UUID)){
+             Log.e(TAG, "Remote is headet device");
+             return false;
+        }        
+
         HeadsetClientStateMachine sm = getStateMachine(device);
         if (sm == null) {
             Log.e(TAG, "Cannot allocate SM for device " + device);
+            return false;
+        }
+        
+        A2dpSinkService a2dpSinkSservice = A2dpSinkService.getA2dpSinkService();
+        if(!a2dpSinkSservice.isOtherDeviceDisconnected(device)){
+            Log.e(TAG, "Already exist connected or connecting a2dpsink devices");
+            return false;
+        }
+
+        AdapterService adapterService = AdapterService.getAdapterService();
+        if(adapterService != null
+            && (adapterService.hasConnectedA2DPSourceDevice()
+                ||adapterService.hasConnectedHeadsetDevice()) )
+        {
+            if (DBG) Log.d(TAG,"connect reject for a2dpsink device already connected");
+            return false;
+        }
+
+        int[] states =new int[] {BluetoothProfile.STATE_CONNECTED, 
+                                 BluetoothProfile.STATE_CONNECTING, 
+                                 BluetoothProfile.STATE_DISCONNECTING};
+        List<BluetoothDevice> devices = getDevicesMatchingConnectionStates(states);        
+        if(devices != null && devices.size() > 0){
+            Log.e(TAG, "Already exist connected or connecting hfp devices");
             return false;
         }
 
@@ -480,6 +531,23 @@ public class HeadsetClientService extends ProfileService {
 
         sm.sendMessage(HeadsetClientStateMachine.CONNECT, device);
         return true;
+    }
+
+    public boolean isOtherDeviceDisconnected(BluetoothDevice device){
+        boolean ret= true;
+        int[] states =new int[] {BluetoothProfile.STATE_CONNECTED, 
+                                 BluetoothProfile.STATE_CONNECTING, 
+                                 BluetoothProfile.STATE_DISCONNECTING};
+        List<BluetoothDevice> devices = getDevicesMatchingConnectionStates(states);
+
+        if(devices != null && devices.size() > 0){
+             if(device != null && devices.indexOf(device)<  0){
+                ret = false;
+             }
+
+        }      
+        Log.d(TAG, "isDisconnected ret=" +ret);
+        return ret;
     }
 
     boolean disconnect(BluetoothDevice device) {
@@ -854,6 +922,8 @@ public class HeadsetClientService extends ProfileService {
         HeadsetClientStateMachine sm = getStateMachine(stackEvent.device);
         if (sm == null) {
             Log.w(TAG, "No SM found for event " + stackEvent);
+        } else {
+            Log.w(TAG, "HeadsetClientStateMachine:" + stackEvent);
         }
 
         sm.sendMessage(StackEvent.STACK_EVENT, stackEvent);

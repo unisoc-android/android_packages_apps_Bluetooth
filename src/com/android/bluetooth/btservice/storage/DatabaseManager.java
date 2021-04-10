@@ -34,6 +34,8 @@ import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.StatsLog;
+import android.database.sqlite.SQLiteDiskIOException;
+import android.database.sqlite.SQLiteFullException;
 
 import com.android.bluetooth.Utils;
 import com.android.bluetooth.btservice.AdapterService;
@@ -90,7 +92,7 @@ public class DatabaseManager {
             switch (msg.what) {
                 case MSG_LOAD_DATABASE: {
                     synchronized (mDatabase) {
-                        List<Metadata> list;
+                        List<Metadata> list = null;
                         try {
                             list = mDatabase.load();
                         } catch (IllegalStateException e) {
@@ -98,22 +100,40 @@ public class DatabaseManager {
                             mDatabase = MetadataDatabase
                                     .createDatabaseWithoutMigration(mAdapterService);
                             list = mDatabase.load();
+                        } catch (SQLiteDiskIOException e) {
+                            Log.e(TAG, "MSG_LOAD_DATABASE SQLiteDiskIOException: disk I/O error");
+                        } catch (SQLiteFullException e) {
+                            Log.e(TAG, "MSG_LOAD_DATABASE SQLiteFullException: disk I/O error");
                         }
-                        cacheMetadata(list);
+                        if (null != list) {
+                            cacheMetadata(list);
+                        }
                     }
                     break;
                 }
                 case MSG_UPDATE_DATABASE: {
                     Metadata data = (Metadata) msg.obj;
                     synchronized (mDatabase) {
-                        mDatabase.insert(data);
+                        try {
+                            mDatabase.insert(data);
+                        } catch (SQLiteDiskIOException e) {
+                            Log.e(TAG, "MSG_UPDATE_DATABASE SQLiteDiskIOException: disk I/O error");
+                        } catch (SQLiteFullException e) {
+                            Log.e(TAG, "MSG_UPDATE_DATABASE SQLiteFullException: disk I/O error");
+                        }
                     }
                     break;
                 }
                 case MSG_DELETE_DATABASE: {
                     String address = (String) msg.obj;
                     synchronized (mDatabase) {
-                        mDatabase.delete(address);
+                        try {
+                            mDatabase.delete(address);
+                        } catch (SQLiteDiskIOException e) {
+                            Log.e(TAG, "MSG_DELETE_DATABASE SQLiteDiskIOException: disk I/O error");
+                        } catch (SQLiteFullException e) {
+                            Log.e(TAG, "MSG_DELETE_DATABASE SQLiteFullException: disk I/O error");
+                        }
                     }
                     break;
                 }

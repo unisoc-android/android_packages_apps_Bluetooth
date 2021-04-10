@@ -42,6 +42,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Patterns;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.android.bluetooth.R;
@@ -72,6 +73,7 @@ public class BluetoothOppLauncherActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(new ProgressBar(this));
 
         Intent intent = getIntent();
         String action = intent.getAction();

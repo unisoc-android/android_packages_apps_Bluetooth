@@ -79,6 +79,12 @@ import com.android.internal.app.IBatteryStats;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import com.android.bluetooth.a2dp.A2dpService;
+import com.android.bluetooth.a2dpsink.A2dpSinkService;
+import com.android.bluetooth.hfp.HeadsetService;
+import com.android.bluetooth.hfpclient.HeadsetClientService;
+import com.android.bluetooth.pbapclient.PbapClientService;
+
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -86,6 +92,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class AdapterService extends Service {
     private static final String TAG = "BluetoothAdapterService";
@@ -216,6 +223,61 @@ public class AdapterService extends Service {
         mHandler.obtainMessage(MESSAGE_PROFILE_SERVICE_UNREGISTERED, profile).sendToTarget();
     }
 
+    public  void setProfileUndefinePriority(int profileId) {
+        final BluetoothDevice bondedDevices[] = getBondedDevices();
+        Log.d(TAG, "setProfileUndefinePriority(): profileId = " + profileId);
+
+        switch (profileId) {
+            case BluetoothProfile.HEADSET:
+                HeadsetService hsService = HeadsetService.getHeadsetService();
+                if (hsService != null) {
+
+                 for (BluetoothDevice device : bondedDevices) {
+                    hsService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
+                   }
+
+                }
+                break;
+
+            case BluetoothProfile.A2DP:
+                A2dpService a2dpService = A2dpService.getA2dpService();
+                 if (a2dpService !=null) {
+                   for (BluetoothDevice device : bondedDevices) {
+                    a2dpService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
+                   }
+                }
+                break;
+            case BluetoothProfile.A2DP_SINK:
+                A2dpSinkService a2dpSinkService = A2dpSinkService.getA2dpSinkService();
+                 if (a2dpSinkService !=null) {
+                   for (BluetoothDevice device : bondedDevices) {
+                    a2dpSinkService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
+                   }
+                }
+                break;
+            case BluetoothProfile.HEADSET_CLIENT:
+                 HeadsetClientService  hscService = HeadsetClientService.getHeadsetClientService();
+                 if (hscService !=null) {
+                   for (BluetoothDevice device : bondedDevices) {
+                     hscService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
+                   }
+                }
+                break;
+
+            case BluetoothProfile.PBAP_CLIENT:
+                 PbapClientService pbapClientService = PbapClientService.getPbapClientService();
+                 if (pbapClientService !=null) {
+                   for (BluetoothDevice device : bondedDevices) {
+                     pbapClientService.setPriority(device, BluetoothProfile.PRIORITY_UNDEFINED);
+                   }
+                }
+                break;
+
+            default:
+                Log.w(TAG, "Tried to set AutoConnect priority on invalid profile " + profileId);
+                break;
+        }
+    }
     /**
      * Notify AdapterService that a ProfileService has started or stopped.
      *
@@ -2044,9 +2106,96 @@ public class AdapterService extends Service {
         return true;
     }
 
-    public boolean isQuietModeEnabled() {
-        debugLog("isQuetModeEnabled() - Enabled = " + mQuietmode);
-        return mQuietmode;
+      public boolean isQuietModeEnabled() {
+          debugLog("isQuetModeEnabled() - Enabled = " + mQuietmode);
+          return mQuietmode;
+     }
+     public void disableAutoTryConnect(){
+          HeadsetClientService  hscService = HeadsetClientService.getHeadsetClientService();
+          debugLog("disableAutoTryConnect() - hscService " + hscService);
+          if(hscService != null) hscService.disableAutoConnect();
+     }
+
+     public boolean hasConnectedA2DPSinkDevice(){
+            Log.d(TAG,"hasConnectedA2DPSinkDevice");
+            A2dpSinkService a2dpSinkSservice = A2dpSinkService.getA2dpSinkService();
+            if(a2dpSinkSservice != null){
+                List<BluetoothDevice> a2dpSinkConnDevList = a2dpSinkSservice.getConnectedDevices();
+                if(a2dpSinkConnDevList != null && a2dpSinkConnDevList.size()>0){
+                     Log.d(TAG,"exist A2DPSinkDevice");
+                     return true;
+                }
+            }
+            return false;
+    }
+
+    public boolean hasConnectedA2DPSourceDevice(){
+            Log.d(TAG,"hasConnectedA2DPSourceDevice");
+            A2dpService a2dpService = A2dpService.getA2dpService();
+            if(a2dpService != null){
+                List<BluetoothDevice> a2dpConnDevList= a2dpService.getConnectedDevices();
+                if(a2dpConnDevList != null && a2dpConnDevList.size()>0){
+                     Log.d(TAG,"exist A2DPSourceDevice");
+                     return true;
+                }
+            }
+            return false;
+
+    }
+    public boolean hasOtherConnectedHostDevice(BluetoothDevice device){
+            Log.d(TAG,"hasOtherConnectedHostDevice device =" + device);
+            HeadsetService  hsService = HeadsetService.getHeadsetService();
+            if(hsService != null){
+                List<BluetoothDevice> HeadsetConnDevList = hsService.getConnectedDevices();
+                if(HeadsetConnDevList != null
+                    && HeadsetConnDevList.size()>0 ){
+                     if(device == null || HeadsetConnDevList.indexOf(device) < 0){
+                         Log.d(TAG,"exist other ConnectedHeadset HeadsetConnDevList=" + HeadsetConnDevList + " device =" + device);
+                         return true;
+                     }
+                }
+            }
+
+            A2dpService a2dpService = A2dpService.getA2dpService();
+            if(a2dpService != null){
+                List<BluetoothDevice> a2dpConnDevList= a2dpService.getConnectedDevices();
+                if(a2dpConnDevList != null
+                    && a2dpConnDevList.size()>0){
+                    if(device == null || a2dpConnDevList.indexOf(device) < 0){
+                         Log.d(TAG,"exist otherA2DPSourceDevice");
+                         return true;
+                     }
+                }
+            }
+            return false;
+    }
+
+    public boolean hasConnectedHeadsetDevice(){
+            Log.d(TAG,"hasConnectedHeadsetDevice");
+            HeadsetService  hsService = HeadsetService.getHeadsetService();
+            if(hsService != null){
+                List<BluetoothDevice> HeadsetConnDevList = hsService.getConnectedDevices();
+                if(HeadsetConnDevList != null && HeadsetConnDevList.size()>0){
+                     Log.d(TAG,"exist ConnectedHeadset");
+                     return true;
+                }
+            }
+            return false;
+    }
+
+
+    public boolean hasConnectedHeadsetClientDevice(){
+            Log.d(TAG,"hasConnectedHeadsetClientDevice");
+            HeadsetClientService  hscService = HeadsetClientService.getHeadsetClientService();
+            if(hscService != null){
+                List<BluetoothDevice> HeadsetClientDevList= hscService.getConnectedDevices();
+                if(HeadsetClientDevList != null && HeadsetClientDevList.size()>0){
+                     Log.d(TAG,"exist HeadsetClient");
+                     return true;
+                }
+            }
+            return false;
+
     }
 
     public void updateUuids() {
@@ -2233,6 +2382,12 @@ public class AdapterService extends Service {
             return false;
         }
 
+        if (pinCode.length != len) {
+            android.util.EventLog.writeEvent(0x534e4554, "139287605", -1,
+                    "PIN code length mismatch");
+            return false;
+        }
+
         StatsLog.write(StatsLog.BLUETOOTH_BOND_STATE_CHANGED,
                 obfuscateAddress(device), 0, device.getType(),
                 BluetoothDevice.BOND_BONDING,
@@ -2246,6 +2401,12 @@ public class AdapterService extends Service {
         enforceCallingOrSelfPermission(BLUETOOTH_PERM, "Need BLUETOOTH permission");
         DeviceProperties deviceProp = mRemoteDevices.getDeviceProperties(device);
         if (deviceProp == null || deviceProp.getBondState() != BluetoothDevice.BOND_BONDING) {
+            return false;
+        }
+
+        if (passkey.length != len) {
+            android.util.EventLog.writeEvent(0x534e4554, "139287605", -1,
+                    "Passkey length mismatch");
             return false;
         }
 
@@ -2302,6 +2463,8 @@ public class AdapterService extends Service {
     }
 
     boolean setPhonebookAccessPermission(BluetoothDevice device, int value) {
+        enforceCallingOrSelfPermission(BLUETOOTH_PRIVILEGED,
+                "Need BLUETOOTH PRIVILEGED permission");
         SharedPreferences pref = getSharedPreferences(PHONEBOOK_ACCESS_PERMISSION_PREFERENCE_FILE,
                 Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
@@ -2875,6 +3038,12 @@ public class AdapterService extends Service {
         return obfuscateAddressNative(Utils.getByteAddress(device));
     }
 
+    public boolean setProfileState(String address, int profile,boolean state) {
+        if(address == null) {
+            return false;
+        }
+        return setProfileStateNative(Utils.getBytesFromAddress(address), profile, state);
+    }
     static native void classInitNative();
 
     native boolean initNative(boolean startRestricted, boolean isSingleUserMode);
@@ -2959,6 +3128,8 @@ public class AdapterService extends Service {
     private native void interopDatabaseAddNative(int feature, byte[] address, int length);
 
     private native byte[] obfuscateAddressNative(byte[] address);
+
+    native boolean setProfileStateNative(byte[] address,int profile,boolean state);
 
     // Returns if this is a mock object. This is currently used in testing so that we may not call
     // System.exit() while finalizing the object. Otherwise GC of mock objects unfortunately ends up

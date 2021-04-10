@@ -84,6 +84,9 @@ class AvrcpControllerStateMachine extends StateMachine {
 
     static final int MESSAGE_INTERNAL_ABS_VOL_TIMEOUT = 404;
 
+    //commands from Binder service. (merge from 8.1)
+    static final int MESSAGE_SEND_PASS_THROUGH_CMD = 500;
+
     /*
      * Base value for absolute volume from JNI
      */

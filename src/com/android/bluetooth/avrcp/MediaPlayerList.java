@@ -189,6 +189,7 @@ public class MediaPlayerList {
         mMediaSessionManager.removeOnActiveSessionsChangedListener(mActiveSessionsChangedListener);
         mMediaSessionManager.setCallback(null, null);
         mMediaSessionManager = null;
+        mCallback = null;
 
         mMediaPlayerIds.clear();
 
@@ -196,6 +197,8 @@ public class MediaPlayerList {
             player.cleanup();
         }
         mMediaPlayers.clear();
+        mActivePlayerId = NO_ACTIVE_PLAYER;
+        d("MediaPlayers cleanup");
 
         if (mBrowsablePlayerConnector != null) {
             mBrowsablePlayerConnector.cleanup();

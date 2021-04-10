@@ -309,11 +309,25 @@ public class HeadsetPhoneState {
                     if (TelephonyIntents.ACTION_SIM_STATE_CHANGED.equals(intent.getAction())) {
                         // This is a sticky broadcast, so if it's already been loaded,
                         // this'll execute immediately.
-                        if (IccCardConstants.INTENT_VALUE_ICC_LOADED.equals(
-                                intent.getStringExtra(IccCardConstants.INTENT_KEY_ICC_STATE))) {
+                        // UNISOC: Bug#964318 only get  sim state from defult simId
+                        int phoneId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+                        int simState = TelephonyManager.SIM_STATE_UNKNOWN;
+                        phoneId = mSubscriptionManager.getDefaultDataPhoneId();
+                        if (mSubscriptionManager.isValidPhoneId(phoneId)) {
+                            simState = mSubscriptionManager.getSimStateForSlotIndex(phoneId);
+                            Log.d(TAG, "SimId = " + phoneId + ", SimState = " + simState);
+                        }
+                        if (simState == TelephonyManager.SIM_STATE_LOADED) {
                             mIsSimStateLoaded = true;
                             sendDeviceStateChanged();
-                            mHeadsetService.unregisterReceiver(this);
+
+                            // UNISOC:Bug#818912 in case of call unregisterReceiver again
+                            // when the receiver is already unregistered
+                            try {
+                                mHeadsetService.unregisterReceiver(this);
+                            } catch (IllegalArgumentException e) {
+                                Log.e(TAG, "the receiver is already unregistered");
+                            }
                         }
                     }
                 }

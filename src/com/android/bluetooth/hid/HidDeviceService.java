@@ -48,7 +48,7 @@ import java.util.NoSuchElementException;
 
 /** @hide */
 public class HidDeviceService extends ProfileService {
-    private static final boolean DBG = false;
+    private static final boolean DBG = Utils.isDebug();
     private static final String TAG = HidDeviceService.class.getSimpleName();
 
     private static final int MESSAGE_APPLICATION_STATE_CHANGED = 1;
@@ -638,6 +638,10 @@ public class HidDeviceService extends ProfileService {
     protected boolean start() {
         if (DBG) {
             Log.d(TAG, "start()");
+        }
+        if (sHidDeviceService != null) {
+            Log.wtfStack(TAG, "The service has already been initialized");
+            return false;
         }
 
         mHandler = new HidDeviceServiceHandler();

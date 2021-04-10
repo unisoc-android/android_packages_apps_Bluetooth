@@ -148,7 +148,9 @@ public abstract class ProfileService extends Service {
             if (state == BluetoothAdapter.STATE_OFF) {
                 doStop();
             } else if (state == BluetoothAdapter.STATE_ON) {
-                doStart();
+                if (!mProfileStarted) {
+                    doStart();
+                }
             }
         }
         return PROFILE_SERVICE_MODE;

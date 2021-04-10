@@ -35,6 +35,7 @@ import android.os.Message;
 import android.os.ServiceManager;
 import android.os.UserManager;
 import android.util.Log;
+import android.os.SystemProperties;
 
 import com.android.bluetooth.BluetoothMetricsProto;
 import com.android.bluetooth.Utils;
@@ -54,7 +55,7 @@ import java.util.List;
  */
 public class PanService extends ProfileService {
     private static final String TAG = "PanService";
-    private static final boolean DBG = false;
+    private static final boolean DBG = Utils.isDebug();
     private static PanService sPanService;
 
     private static final String BLUETOOTH_IFACE_ADDR_START = "192.168.44.1";
@@ -375,6 +376,9 @@ public class PanService extends ProfileService {
         final long identityToken = Binder.clearCallingIdentity();
         try {
             ConnectivityManager.enforceTetherChangePermission(context, pkgName);
+        } catch (SecurityException e) {
+            Log.e(TAG, "Stack:" + Log.getStackTraceString(new Throwable()));
+            return;
         } finally {
             Binder.restoreCallingIdentity(identityToken);
         }

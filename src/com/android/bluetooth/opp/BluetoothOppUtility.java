@@ -44,13 +44,18 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
+import android.os.EnvironmentEx;
 import android.os.SystemProperties;
 import android.util.Log;
+import android.view.View;
 
 import com.android.bluetooth.R;
+import com.android.bluetooth.btservice.AdapterService;
 
 import com.google.android.collect.Lists;
+import android.os.Handler;
+import android.os.Message;
+import android.text.TextUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +65,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-
+import java.util.Locale;
 /**
  * This class has some utilities for Opp application;
  */
@@ -73,6 +78,11 @@ public class BluetoothOppUtility {
 
     private static final ConcurrentHashMap<Uri, BluetoothOppSendFileInfo> sSendFileMap =
             new ConcurrentHashMap<Uri, BluetoothOppSendFileInfo>();
+    // UNISOC: Bug#1072400 Add for Bluetooth Opp auto disconnect
+    // when OBEX request or response timeout Feature BEG-->
+    private static final int OBEX_TIMEOUT_DELAY = 120000;
+    private static boolean bIsSessionTimerSwitchOn = true;
+    //<-- Add for Bluetooth Opp auto disconnect Feature END
 
     public static boolean isBluetoothShareUri(Uri uri) {
         return uri.toString().startsWith(BluetoothShare.CONTENT_URI.toString());
@@ -426,7 +436,8 @@ public class BluetoothOppUtility {
             return false;
         }
         final File file = new File(uri.getCanonicalUri().getPath());
-        return isSameOrSubDirectory(Environment.getExternalStorageDirectory(), file);
+        return (isSameOrSubDirectory(EnvironmentEx.getInternalStoragePath(), file)
+             || isSameOrSubDirectory(EnvironmentEx.getExternalStoragePath(), file));
     }
 
     /**
@@ -455,6 +466,48 @@ public class BluetoothOppUtility {
         NotificationManager nm = (NotificationManager) ctx
                 .getSystemService(Context.NOTIFICATION_SERVICE);
         nm.cancel(BluetoothOppNotification.NOTIFICATION_ID_PROGRESS);
+    }
+    // UNISOC: Bug#1072400 Add for Bluetooth Opp auto disconnect when OBEX request or response timeout Feature BEG-->
+    static void startDisconnectTimer(Handler callback, BluetoothOppShareInfo info) {
+      if (bIsSessionTimerSwitchOn) {
+          Message msg = Message.obtain(callback);
+          msg.what = BluetoothOppObexSession.MSG_SESSION_ERROR;
+          if (info != null) {
+              msg.obj = info;
+          }
+          if (D) Log.d(TAG, "startDisconnectTimer, sendMessageDelayed");
+          callback.sendMessageDelayed(msg, OBEX_TIMEOUT_DELAY);
+      }
+    }
+
+    static void stopDisconnectTimer(Handler callback) {
+        if (bIsSessionTimerSwitchOn) {
+            if (D) Log.d(TAG, "stopDisconnectTimer, removeMessage");
+            callback.removeMessages(BluetoothOppObexSession.MSG_SESSION_ERROR);
+        }
+    }
+    //<-- Add for Bluetooth Opp auto disconnect when OBEX request or response timeout Feature END
+
+    static void setLocalProfileState(String address, int profile, boolean state) {
+        Log.d(TAG, "setLocalProfileState" + address + " " + profile+ " "+ state);
+        AdapterService adapterService = AdapterService.getAdapterService();
+        if(address == null ||adapterService == null) {
+            Log.e(TAG," setLocalProfileState failed");
+            return;
+        }
+        adapterService.setProfileState(address,profile,state);
+    }
+
+    private static boolean isRTL() {
+        final Locale locale = Locale.getDefault();
+        return TextUtils.getLayoutDirectionFromLocale(locale) == View.LAYOUT_DIRECTION_RTL;
+    }
+
+    public static String switchStrToRTL(String str) {
+        if (isRTL()) {
+            return ("\u202D" + str + "\u202C");
+        }
+        return str;
     }
 
 }

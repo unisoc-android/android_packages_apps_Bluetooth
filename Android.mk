@@ -52,7 +52,10 @@ LOCAL_ANNOTATION_PROCESSOR_CLASSES := \
 
 LOCAL_REQUIRED_MODULES := libbluetooth
 LOCAL_PROGUARD_ENABLED := disabled
+
+ifneq ($(strip $(PRODUCT_SUPPORT_BLUETOOTH)), false)
 include $(BUILD_PACKAGE)
+endif
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
 

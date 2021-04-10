@@ -46,7 +46,7 @@ import java.util.Queue;
 import java.util.Set;
 
 final class RemoteDevices {
-    private static final boolean DBG = false;
+    private static final boolean DBG = Utils.isDebug();
     private static final String TAG = "BluetoothRemoteDevices";
 
     // Maximum number of device properties to remember

@@ -902,6 +902,11 @@ class AdapterProperties {
             mProfilesConnected = 0;
             mProfilesConnecting = 0;
             mProfilesDisconnecting = 0;
+            //  UNISOC: bug 944535.  add protection
+            if (mService == null) {
+                Log.w(TAG, "onBluetoothReady.  mService has been null !!");
+                return;
+            }
             // adapterPropertyChangedCallback has already been received.  Set the scan mode.
             setScanMode(AbstractionLayer.BT_SCAN_MODE_CONNECTABLE);
             // This keeps NV up-to date on first-boot after flash.

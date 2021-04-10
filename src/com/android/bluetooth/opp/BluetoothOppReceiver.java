@@ -46,6 +46,7 @@ import android.widget.Toast;
 
 import com.android.bluetooth.R;
 
+import java.lang.NullPointerException;
 /**
  * Receives and handles: system broadcasts; Intents from other applications;
  * Intents from OppService; Intents from modules in Opp application layer.
@@ -58,7 +59,10 @@ public class BluetoothOppReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-
+        if (action == null) {
+            if (D) Log.d(TAG, "Received action is null, return.");
+            return;
+        }
         if (action.equals(BluetoothDevicePicker.ACTION_DEVICE_SELECTED)) {
             BluetoothOppManager mOppManager = BluetoothOppManager.getInstance(context);
 
@@ -180,8 +184,12 @@ public class BluetoothOppReceiver extends BroadcastReceiver {
             if (V) {
                 Log.v(TAG, "Receiver hide for " + intent.getData());
             }
-            Cursor cursor =
-                    context.getContentResolver().query(intent.getData(), null, null, null, null);
+            Cursor cursor = null;
+            try {
+                cursor = context.getContentResolver().query(intent.getData(), null, null, null, null);
+            } catch (NullPointerException e) {
+                Log.e(TAG, "onReceive NullPointerException");
+            }
             if (cursor != null) {
                 if (cursor.moveToFirst()) {
                     int visibilityColumn = cursor.getColumnIndexOrThrow(BluetoothShare.VISIBILITY);
@@ -250,19 +258,19 @@ public class BluetoothOppReceiver extends BroadcastReceiver {
                 context.sendBroadcast(handoverIntent, Constants.HANDOVER_STATUS_PERMISSION);
                 return;
             }
-
+            String fileName = BluetoothOppUtility.switchStrToRTL(transInfo.mFileName);
             if (BluetoothShare.isStatusSuccess(transInfo.mStatus)) {
                 if (transInfo.mDirection == BluetoothShare.DIRECTION_OUTBOUND) {
-                    toastMsg = context.getString(R.string.notification_sent, transInfo.mFileName);
+                    toastMsg = context.getString(R.string.notification_sent, fileName);
                 } else if (transInfo.mDirection == BluetoothShare.DIRECTION_INBOUND) {
                     toastMsg =
-                            context.getString(R.string.notification_received, transInfo.mFileName);
+                            context.getString(R.string.notification_received, fileName);
                 }
 
             } else if (BluetoothShare.isStatusError(transInfo.mStatus)) {
                 if (transInfo.mDirection == BluetoothShare.DIRECTION_OUTBOUND) {
                     toastMsg =
-                            context.getString(R.string.notification_sent_fail, transInfo.mFileName);
+                            context.getString(R.string.notification_sent_fail, fileName);
                 } else if (transInfo.mDirection == BluetoothShare.DIRECTION_INBOUND) {
                     toastMsg = context.getString(R.string.download_fail_line1);
                 }

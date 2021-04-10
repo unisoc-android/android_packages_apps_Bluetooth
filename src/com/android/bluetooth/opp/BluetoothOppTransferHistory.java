@@ -82,6 +82,8 @@ public class BluetoothOppTransferHistory extends Activity
     /** Class to handle Notification Manager updates */
     private BluetoothOppNotification mNotifier;
 
+    private AlertDialog  mDialog = null;
+
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -201,6 +203,11 @@ public class BluetoothOppTransferHistory extends Activity
     protected void onDestroy() {
         if (mTransferCursor != null) {
             mTransferCursor.close();
+            Log.d(TAG, "onDestroy mTransferCursor.close");
+        }
+        if (mDialog != null) {
+            mDialog.dismiss();
+            mDialog = null;
         }
         super.onDestroy();
     }
@@ -233,16 +240,24 @@ public class BluetoothOppTransferHistory extends Activity
      * Prompt the user if they would like to clear the transfer history
      */
     private void promptClearList() {
-        new AlertDialog.Builder(this).setTitle(R.string.transfer_clear_dlg_title)
-                .setMessage(R.string.transfer_clear_dlg_msg)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        clearAllDownloads();
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        if (mDialog == null) {
+            mDialog = new AlertDialog.Builder(this).setTitle(R.string.transfer_clear_dlg_title)
+                    .setMessage(R.string.transfer_clear_dlg_msg)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            try {
+                                clearAllDownloads();
+                            } catch (StaleDataException ex) {
+                                Log.e(TAG, "Here occurs Exception", ex);
+                            }
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        } else {
+            mDialog.show();
+        }
     }
 
     /**

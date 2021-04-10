@@ -285,9 +285,7 @@ public class BluetoothOppTransfer implements BluetoothOppBatch.BluetoothOppBatch
 
                 case BluetoothOppObexSession.MSG_SESSION_ERROR:
                     /* Handle the error state of an Obex session */
-                    if (V) {
-                        Log.v(TAG, "receive MSG_SESSION_ERROR for batch " + mBatch.mId);
-                    }
+                    Log.w(TAG, "receive MSG_SESSION_ERROR for batch " + mBatch.mId);
                     cleanUp();
                     try {
                         BluetoothOppShareInfo info2 = (BluetoothOppShareInfo) msg.obj;
@@ -475,6 +473,8 @@ public class BluetoothOppTransfer implements BluetoothOppBatch.BluetoothOppBatch
             return;
         }
 
+        // SPRD: Modify for Bug862170.
+        registerConnectionreceiver();
         if (mHandlerThread == null) {
             if (V) {
                 Log.v(TAG, "Create handler thread for batch " + mBatch.mId);
@@ -495,7 +495,6 @@ public class BluetoothOppTransfer implements BluetoothOppBatch.BluetoothOppBatch
                 startObexSession();
             }
         }
-        registerConnectionreceiver();
     }
 
     /**

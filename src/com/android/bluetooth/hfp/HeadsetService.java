@@ -86,7 +86,7 @@ import java.util.Objects;
  */
 public class HeadsetService extends ProfileService {
     private static final String TAG = "HeadsetService";
-    private static final boolean DBG = false;
+    private static final boolean DBG = Utils.isDebug();
     private static final String DISABLE_INBAND_RINGING_PROPERTY =
             "persist.bluetooth.disableinbandringing";
     private static final ParcelUuid[] HEADSET_UUIDS = {BluetoothUuid.HSP, BluetoothUuid.Handsfree};
@@ -684,6 +684,17 @@ public class HeadsetService extends ProfileService {
             Log.w(TAG, "connect: PRIORITY_OFF, device=" + device + ", " + Utils.getUidPidString());
             return false;
         }
+
+        AdapterService adapterService = AdapterService.getAdapterService();
+        if(adapterService != null
+            && (adapterService.hasConnectedA2DPSinkDevice()
+                || adapterService.hasConnectedHeadsetClientDevice()
+                || adapterService.hasOtherConnectedHostDevice(device)))
+        {
+            if (DBG) Log.d(TAG,"connect reject for a2dpsink device already connected");
+            return false;
+        }
+
         ParcelUuid[] featureUuids = mAdapterService.getRemoteUuids(device);
         if (!BluetoothUuid.containsAnyUuid(featureUuids, HEADSET_UUIDS)) {
             Log.e(TAG, "connect: Cannot connect to " + device + ": no headset UUID, "
@@ -720,7 +731,15 @@ public class HeadsetService extends ProfileService {
             }
             if (disconnectExisting) {
                 for (BluetoothDevice connectingConnectedDevice : connectingConnectedDevices) {
-                    disconnect(connectingConnectedDevice);
+                    // UNISOC: bug 968730. If current device is connecting, just do nothing
+                    if (connectingConnectedDevice.equals(device)) {
+                        Log.w(TAG, "Device " + device + " is already connected/connecting. ");
+                        return false;
+                    } else {
+                        Log.w(TAG, "Connected: Reach to max size 1, disconnect " + connectingConnectedDevice);
+                        disconnect(connectingConnectedDevice);
+                    }
+
                 }
                 setActiveDevice(null);
             }
@@ -1525,7 +1544,9 @@ public class HeadsetService extends ProfileService {
             // Suspend A2DP when call about is about to become active
             if (callState != HeadsetHalConstants.CALL_STATE_DISCONNECTED
                     && !mSystemInterface.isCallIdle() && isCallIdleBefore) {
+                logD("setParameters A2dpSuspended=true start");
                 mSystemInterface.getAudioManager().setParameters("A2dpSuspended=true");
+                logD("setParameters A2dpSuspended=true end");
             }
         });
         doForEachConnectedStateMachine(

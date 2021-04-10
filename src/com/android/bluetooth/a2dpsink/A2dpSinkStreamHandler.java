@@ -31,6 +31,7 @@ import android.util.Log;
 import com.android.bluetooth.R;
 import com.android.bluetooth.avrcpcontroller.BluetoothMediaBrowserService;
 import com.android.bluetooth.hfpclient.HeadsetClientService;
+import com.android.bluetooth.Utils;
 
 import java.util.List;
 
@@ -54,7 +55,7 @@ import java.util.List;
  */
 public class A2dpSinkStreamHandler extends Handler {
     private static final String TAG = "A2dpSinkStreamHandler";
-    private static final boolean DBG = Log.isLoggable(TAG, Log.DEBUG);
+    private static final boolean DBG = Utils.isDebug();
 
     // Configuration Variables
     private static final int DEFAULT_DUCK_PERCENT = 25;

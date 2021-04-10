@@ -49,10 +49,59 @@ import java.util.concurrent.TimeUnit;
  * @hide
  */
 
-public final class Utils {
+final public class Utils {
+    public static final int CONN_SUCCESS = 0x00;
+    public static final int CONN_ERR_ILLEGAL_COMMAND = 0x01;
+    public static final int CONN_ERR_NO_CONNECTION = 0x02;
+    public static final int CONN_ERR_HW_FAILURE = 0x03;
+    public static final int CONN_ERR_PAGE_TIMEOUT = 0x04;
+    public static final int CONN_ERR_AUTH_FAILURE = 0x05;
+    public static final int CONN_ERR_KEY_MISSING = 0x06;
+    public static final int CONN_ERR_MEMORY_FULL = 0x07;
+    public static final int CONN_ERR_CONNECTION_TOUT = 0x08;
+    public static final int CONN_ERR_MAX_NUM_OF_CONNECTIONS = 0x09;
+    public static final int CONN_ERR_MAX_NUM_OF_SCOS = 0x0A;
+    public static final int CONN_ERR_CONNECTION_EXISTS = 0x0B;
+    public static final int CONN_ERR_COMMAND_DISALLOWED = 0x0C;
+    public static final int CONN_ERR_HOST_REJECT_RESOURCES = 0x0D;
+    public static final int CONN_ERR_HOST_REJECT_SECURITY = 0x0E;
+    public static final int CONN_ERR_HOST_REJECT_DEVICE = 0x0F;
+    public static final int CONN_ERR_HOST_TIMEOUT = 0x10;
+    public static final int CONN_ERR_UNSUPPORTED_VALUE = 0x11;
+    public static final int CONN_ERR_ILLEGAL_PARAMETER_FMT = 0x12;
+    public static final int CONN_ERR_PEER_USER = 0x13;
+    public static final int CONN_ERR_PEER_LOW_RESOURCES = 0x14;
+    public static final int CONN_ERR_PEER_POWER_OFF = 0x15;
+    public static final int CONN_ERR_CONN_CAUSE_LOCAL_HOST = 0x16;
+    public static final int CONN_ERR_PAIRING_NOT_ALLOWED = 0x18;
+    public static final int CONN_ERR_UNSUPPORTED_REM_FEATURE = 0x1A;
+    public static final int CONN_ERR_INVALID_LMP_PARAM = 0x1E;
+    public static final int CONN_ERR_UNSUPPORTED_LMP_FEATURE = 0x20;
+    public static final int CONN_ERR_ROLE_CHANGE_NOT_ALLOWED = 0x21;
+    public static final int CONN_ERR_LMP_RESPONSE_TIMEOUT = 0x22;
+    public static final int CONN_ERR_LMP_ERR_TRANS_COLLISION = 0x23;
+    public static final int CONN_ERR_LMP_PDU_NOT_ALLOWED = 0x24;
+    public static final int CONN_ERR_ENCRY_MODE_NOT_ACCEPTABLE = 0x25;
+    public static final int CONN_ERR_UNIT_KEY_USED = 0x26;
+    public static final int CONN_ERR_PAIRING_WITH_UNIT_KEY_NOT_SUPPORTED = 0x29;
+    public static final int CONN_ERR_DIFF_TRANSACTION_COLLISION = 0x2A;
+    public static final int CONN_ERR_UNDEFINED_0x2B = 0x2B;
+    public static final int CONN_ERR_INSUFFCIENT_SECURITY = 0x2F;
+    public static final int CONN_ERR_UNDEFINED_0x33 = 0x33;
+    public static final int CONN_ERR_INQ_RSP_DATA_TOO_LARGE = 0x36;
+    public static final int CONN_ERR_SIMPLE_PAIRING_NOT_SUPPORTED = 0x37;
+    public static final int CONN_ERR_HOST_BUSY_PAIRING = 0x38;
+    public static final int CONN_ERR_CONTROLLER_BUSY = 0x3A;
+    public static final int CONN_ERR_UNACCEPT_CONN_INTERVAL = 0x3B;
+    public static final int CONN_ERR_CONN_TOUT_DUE_TO_MIC_FAILURE = 0x3D;
+    public static final int CONN_ERR_CONN_FAILED_ESTABLISHMENT = 0x3E;
+    public static final int CONN_ERR_MAC_CONNECTION_FAILED = 0x3F;
+    public static final int CONN_HINT_TO_RECREATE_AMP_PHYS_LINK = 0xFF; 
+
     private static final String TAG = "BluetoothUtils";
     private static final int MICROS_PER_UNIT = 625;
     private static final String PTS_TEST_MODE_PROPERTY = "persist.bluetooth.pts";
+    private static Boolean IS_DEBUG_BUILD = null;
 
     static final int BD_ADDR_LEN = 6; // bytes
     static final int BD_UUID_LEN = 16; // bytes
@@ -491,5 +540,11 @@ public final class Utils {
      */
     public static String getUidPidString() {
         return "uid/pid=" + Binder.getCallingUid() + "/" + Binder.getCallingPid();
+    }
+    public static boolean isDebug() {
+        if (IS_DEBUG_BUILD == null) {
+            IS_DEBUG_BUILD = Build.TYPE.equals("eng") || Build.TYPE.equals("userdebug");
+        }
+        return IS_DEBUG_BUILD;
     }
 }

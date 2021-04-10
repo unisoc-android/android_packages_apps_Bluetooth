@@ -206,6 +206,8 @@ public class BluetoothOppSendFileInfo {
                 }
             } catch (FileNotFoundException e) {
                 // Ignore
+            } catch (SecurityException e) {
+               Log.e(TAG, e.toString());
             }
         }
 
@@ -223,6 +225,9 @@ public class BluetoothOppSendFileInfo {
             } catch (FileNotFoundException e) {
                 return SEND_FILE_INFO_ERROR;
             } catch (IOException e) {
+                return SEND_FILE_INFO_ERROR;
+            } catch (SecurityException e) {
+                Log.e(TAG, e.toString());
                 return SEND_FILE_INFO_ERROR;
             }
         }

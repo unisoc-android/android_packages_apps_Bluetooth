@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.os.HandlerThread;
+import android.os.ParcelUuid;
 import android.util.Log;
 import android.util.StatsLog;
 
@@ -132,14 +133,18 @@ public class A2dpService extends ProfileService {
         }
 
         // Step 7: Setup broadcast receivers
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        mBondStateChangedReceiver = new BondStateChangedReceiver();
-        registerReceiver(mBondStateChangedReceiver, filter);
-        filter = new IntentFilter();
-        filter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);
-        mConnectionStateChangedReceiver = new ConnectionStateChangedReceiver();
-        registerReceiver(mConnectionStateChangedReceiver, filter);
+        if(mBondStateChangedReceiver == null) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+            mBondStateChangedReceiver = new BondStateChangedReceiver();
+            registerReceiver(mBondStateChangedReceiver, filter);
+        }
+        if(mConnectionStateChangedReceiver == null) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);
+            mConnectionStateChangedReceiver = new ConnectionStateChangedReceiver();
+            registerReceiver(mConnectionStateChangedReceiver, filter);
+        }
 
         // Step 8: Mark service as started
         setA2dpService(this);
@@ -165,10 +170,14 @@ public class A2dpService extends ProfileService {
         setA2dpService(null);
 
         // Step 7: Unregister broadcast receivers
-        unregisterReceiver(mConnectionStateChangedReceiver);
-        mConnectionStateChangedReceiver = null;
-        unregisterReceiver(mBondStateChangedReceiver);
-        mBondStateChangedReceiver = null;
+        if(mConnectionStateChangedReceiver != null) {
+            unregisterReceiver(mConnectionStateChangedReceiver);
+            mConnectionStateChangedReceiver = null;
+        }
+        if(mBondStateChangedReceiver != null) {
+            unregisterReceiver(mBondStateChangedReceiver);
+            mBondStateChangedReceiver = null;
+        }
 
         // Step 6: Cleanup native interface
         mA2dpNativeInterface.cleanup();
@@ -233,6 +242,19 @@ public class A2dpService extends ProfileService {
             Log.e(TAG, "Cannot connect to " + device + " : PRIORITY_OFF");
             return false;
         }
+
+        AdapterService adapterService = AdapterService.getAdapterService();
+        if(adapterService != null &&
+         ( adapterService.hasConnectedA2DPSinkDevice()
+         || adapterService.hasConnectedHeadsetClientDevice()
+         || adapterService.hasOtherConnectedHostDevice(device))
+         ){
+            if (DBG) Log.d(TAG,"connect reject for a2dpsink device already connected");
+            return false;
+        }
+
+        ParcelUuid[] featureUuids = device.getUuids();
+
         if (!BluetoothUuid.isUuidPresent(mAdapterService.getRemoteUuids(device),
                                          BluetoothUuid.AudioSink)) {
             Log.e(TAG, "Cannot connect to " + device + " : Remote does not have A2DP Sink UUID");

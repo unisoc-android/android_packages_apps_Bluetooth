@@ -176,6 +176,8 @@ public class Constants {
      * Today, restricted to images, audio, video and certain text types.
      */
     static final String[] ACCEPTABLE_SHARE_INBOUND_TYPES = new String[]{
+            "*/*",  // UNISOC: 1072398 Accept all types
+            /*
             "image/*",
             "video/*",
             "audio/*",
@@ -194,6 +196,7 @@ public class Constants {
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "application/vnd.openxmlformats-officedocument.presentationml.presentation",
             "application/x-hwp",
+            */
     };
 
     /** Where we store received files */

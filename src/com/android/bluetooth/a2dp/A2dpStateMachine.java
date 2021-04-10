@@ -57,6 +57,7 @@ import android.util.Log;
 import android.util.StatsLog;
 
 import com.android.bluetooth.btservice.ProfileService;
+import com.android.bluetooth.btservice.AdapterService;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.util.State;
 import com.android.internal.util.StateMachine;
@@ -467,6 +468,10 @@ final class A2dpStateMachine extends StateMachine {
             mConnectionState = BluetoothProfile.STATE_CONNECTED;
 
             removeDeferredMessages(CONNECT);
+
+            AdapterService mAdapterService = AdapterService.getAdapterService();
+            mAdapterService.setProfileUndefinePriority(BluetoothProfile.A2DP);
+            mA2dpService.setPriority(mDevice,BluetoothProfile.PRIORITY_AUTO_CONNECT);
 
             // Each time a device connects, we want to re-check if it supports optional
             // codecs (perhaps it's had a firmware update, etc.) and save that state if

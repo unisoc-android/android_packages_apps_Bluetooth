@@ -168,7 +168,7 @@ static void cleanupNative(JNIEnv* env, jobject object) {
 
 static jboolean connectA2dpNative(JNIEnv* env, jobject object,
                                   jbyteArray address) {
-  ALOGI("%s: sBluetoothA2dpInterface: %p", __func__, sBluetoothA2dpInterface);
+  ALOGI("%s: sBluetoothA2dpSinkInterface: %p", __func__, sBluetoothA2dpInterface);
   if (!sBluetoothA2dpInterface) return JNI_FALSE;
 
   jbyte* addr = env->GetByteArrayElements(address, NULL);

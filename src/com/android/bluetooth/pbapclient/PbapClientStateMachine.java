@@ -58,6 +58,7 @@ import android.util.Log;
 
 import com.android.bluetooth.BluetoothMetricsProto;
 import com.android.bluetooth.btservice.MetricsLogger;
+import com.android.bluetooth.btservice.AdapterService;
 import com.android.bluetooth.btservice.ProfileService;
 import com.android.internal.util.IState;
 import com.android.internal.util.State;
@@ -301,6 +302,12 @@ final class PbapClientStateMachine extends StateMachine {
                 mConnectionHandler.obtainMessage(PbapClientConnectionHandler.MSG_DOWNLOAD)
                         .sendToTarget();
             }
+
+            AdapterService mAdapterService = AdapterService.getAdapterService();
+            mAdapterService.setProfileUndefinePriority(BluetoothProfile.PBAP_CLIENT);
+            // Set Auto connect Flag for connected device
+            // this flag is used in case:  bluetooth on
+            mService.setPriority(mCurrentDevice,BluetoothProfile.PRIORITY_AUTO_CONNECT);
         }
 
         @Override

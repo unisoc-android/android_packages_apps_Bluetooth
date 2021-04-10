@@ -39,6 +39,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.Formatter;
@@ -267,14 +268,14 @@ public class BluetoothOppTransferActivity extends AlertActivity
      */
     private void customizeViewContent() {
         String tmp;
-
+        String fileName = BluetoothOppUtility.switchStrToRTL(mTransInfo.mFileName);
         if (mWhichDialog == DIALOG_RECEIVE_ONGOING
                 || mWhichDialog == DIALOG_RECEIVE_COMPLETE_SUCCESS) {
             mLine1View = (TextView) mView.findViewById(R.id.line1_view);
             tmp = getString(R.string.download_line1, mTransInfo.mDeviceName);
             mLine1View.setText(tmp);
             mLine2View = (TextView) mView.findViewById(R.id.line2_view);
-            tmp = getString(R.string.download_line2, mTransInfo.mFileName);
+            tmp = getString(R.string.download_line2, fileName);
             mLine2View.setText(tmp);
             mLine3View = (TextView) mView.findViewById(R.id.line3_view);
             tmp = getString(R.string.download_line3,
@@ -293,7 +294,7 @@ public class BluetoothOppTransferActivity extends AlertActivity
             tmp = getString(R.string.upload_line1, mTransInfo.mDeviceName);
             mLine1View.setText(tmp);
             mLine2View = (TextView) mView.findViewById(R.id.line2_view);
-            tmp = getString(R.string.download_line2, mTransInfo.mFileName);
+            tmp = getString(R.string.download_line2, fileName);
             mLine2View.setText(tmp);
             mLine3View = (TextView) mView.findViewById(R.id.line3_view);
             tmp = getString(R.string.upload_line3, mTransInfo.mFileType,
@@ -315,7 +316,7 @@ public class BluetoothOppTransferActivity extends AlertActivity
                 tmp = getString(id);
                 mLine1View.setText(tmp);
                 mLine2View = (TextView) mView.findViewById(R.id.line2_view);
-                tmp = getString(R.string.download_fail_line2, mTransInfo.mFileName);
+                tmp = getString(R.string.download_fail_line2, fileName);
                 mLine2View.setText(tmp);
                 mLine3View = (TextView) mView.findViewById(R.id.line3_view);
                 tmp = getString(R.string.bt_sm_2_2,
@@ -326,7 +327,7 @@ public class BluetoothOppTransferActivity extends AlertActivity
                 tmp = getString(R.string.download_fail_line1);
                 mLine1View.setText(tmp);
                 mLine2View = (TextView) mView.findViewById(R.id.line2_view);
-                tmp = getString(R.string.download_fail_line2, mTransInfo.mFileName);
+                tmp = getString(R.string.download_fail_line2, fileName);
                 mLine2View.setText(tmp);
                 mLine3View = (TextView) mView.findViewById(R.id.line3_view);
                 tmp = getString(R.string.download_fail_line3,
@@ -341,7 +342,7 @@ public class BluetoothOppTransferActivity extends AlertActivity
             tmp = getString(R.string.upload_fail_line1, mTransInfo.mDeviceName);
             mLine1View.setText(tmp);
             mLine2View = (TextView) mView.findViewById(R.id.line2_view);
-            tmp = getString(R.string.upload_fail_line1_2, mTransInfo.mFileName);
+            tmp = getString(R.string.upload_fail_line1_2, fileName);
             mLine2View.setText(tmp);
             mLine3View = (TextView) mView.findViewById(R.id.line3_view);
             tmp = getString(R.string.download_fail_line3,
@@ -382,24 +383,7 @@ public class BluetoothOppTransferActivity extends AlertActivity
                     // clear correspondent notification item
                     ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(
                             mTransInfo.mID);
-
-                    // retry the failed transfer
-                    Uri uri = BluetoothOppUtility.originalUri(Uri.parse(mTransInfo.mFileUri));
-                    BluetoothOppSendFileInfo sendFileInfo =
-                            BluetoothOppSendFileInfo.generateFileInfo(BluetoothOppTransferActivity
-                            .this, uri, mTransInfo.mFileType, false);
-                    uri = BluetoothOppUtility.generateUri(uri, sendFileInfo);
-                    BluetoothOppUtility.putSendFileInfo(uri, sendFileInfo);
-                    mTransInfo.mFileUri = uri.toString();
-                    BluetoothOppUtility.retryTransfer(this, mTransInfo);
-
-                    BluetoothDevice remoteDevice = mAdapter.getRemoteDevice(mTransInfo.mDestAddr);
-
-                    // Display toast message
-                    Toast.makeText(this, this.getString(R.string.bt_toast_4,
-                            BluetoothOppManager.getInstance(this).getDeviceName(remoteDevice)),
-                            Toast.LENGTH_SHORT).show();
-
+                    new RetryTransfer().execute();
                 } else if (mWhichDialog == DIALOG_SEND_COMPLETE_SUCCESS) {
                     BluetoothOppUtility.updateVisibilityToHidden(this, mUri);
                     ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(
@@ -500,6 +484,33 @@ public class BluetoothOppTransferActivity extends AlertActivity
                     .setText(getString(R.string.upload_fail_ok));
             mAlert.getButton(DialogInterface.BUTTON_NEGATIVE)
                     .setText(getString(R.string.upload_fail_cancel));
+        }
+    }
+
+    private class RetryTransfer extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Uri uri = BluetoothOppUtility.originalUri(Uri.parse(mTransInfo.mFileUri));
+            BluetoothOppSendFileInfo sendFileInfo =
+                    BluetoothOppSendFileInfo.generateFileInfo(BluetoothOppTransferActivity
+                    .this, uri, mTransInfo.mFileType, false);
+            uri = BluetoothOppUtility.generateUri(uri, sendFileInfo);
+            BluetoothOppUtility.putSendFileInfo(uri, sendFileInfo);
+            mTransInfo.mFileUri = uri.toString();
+            BluetoothOppUtility.retryTransfer(BluetoothOppTransferActivity.this, mTransInfo);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            BluetoothDevice remoteDevice = mAdapter.getRemoteDevice(mTransInfo.mDestAddr);
+
+            // Display toast message
+            Toast.makeText(BluetoothOppTransferActivity.this, BluetoothOppTransferActivity.this.getString(R.string.bt_toast_4,
+                    BluetoothOppManager.getInstance(BluetoothOppTransferActivity.this).getDeviceName(remoteDevice)),
+                    Toast.LENGTH_SHORT).show();
         }
     }
 }

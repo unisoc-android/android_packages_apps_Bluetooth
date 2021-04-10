@@ -229,11 +229,11 @@ public class SdpManager {
             }
         }
 
+        sSdpManager = null;
         if (sNativeAvailable) {
             cleanupNative();
             sNativeAvailable = false;
         }
-        sSdpManager = null;
     }
 
 
